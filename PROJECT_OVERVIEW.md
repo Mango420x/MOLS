@@ -6,26 +6,31 @@ Purpose
 Project status
 - Codebase: Java Spring Boot, sources under `src/main/java/com/mls/logistics`.
 - Entrypoint: `com.mls.logistics.LogisticsApplication`.
-- Persistence: JPA entities and Spring Data repositories under `src/main/java/com/mls/logistics/domain` and `.../repository`.
+- Domain & Persistence: JPA entities and Spring Data repositories under `src/main/java/com/mls/logistics/domain` and `.../repository`.
+- Service Layer: Business logic services under `src/main/java/com/mls/logistics/service` for all domain entities.
 - Tests: unit and integration tests in `src/test/java`; test reports in `target/surefire-reports`.
 - Build: Maven wrapper present (`mvnw`, `mvnw.cmd`); build artifacts in `target/`.
 - Note: an IDE run previously exited with a non-zero code; check runtime logs and `target/surefire-reports` for failures.
 
 What this repository contains
-- Backend: Spring Boot application, service layer, domain entities, repositories.
+- Backend: Spring Boot application with a three-layer architecture:
+  - **Domain Layer** (`domain/`): JPA entities representing the core business model.
+  - **Repository Layer** (`repository/`): Spring Data repositories for database persistence.
+  - **Service Layer** (`service/`): Business logic services for each domain entity, acting as intermediaries between controllers and repositories.
 - Lightweight UI: static HTML/CSS/JS under `src/main/resources/static` (if present).
 - Tests, configuration, and Maven build files (`pom.xml`).
 
 Where to start (for a new developer)
 1. Read this file and `README.md` for project conventions.
 2. Inspect the domain model in `src/main/java/com/mls/logistics/domain` to understand entities and relationships.
-3. Run tests locally:
+3. Review the service layer in `src/main/java/com/mls/logistics/service` to see how business logic is organized.
+4. Run tests locally:
 
 ```powershell
 ./mvnw.cmd test
 ```
 
-4. Build and run the application locally:
+5. Build and run the application locally:
 
 ```powershell
 ./mvnw.cmd clean install
@@ -49,7 +54,12 @@ Important business rules
 - Orders are complete only when all items are delivered.
 
 Developer guidelines
+- **Architecture**: Follow the three-layer pattern:
+  - **Domain**: Pure entity classes with JPA annotations.
+  - **Repository**: Data access interfaces extending Spring Data `CrudRepository`.
+  - **Service**: Business logic, validation, and orchestration (constructor-based dependency injection recommended).
 - Keep business logic in services; repositories should be focused on persistence queries.
+- All domain entities have corresponding service classes (`*Service`) with standard methods: `getAll()`, `getById()`, and `create()`.
 - Add unit tests for new behavior under `src/test/java` and run `./mvnw.cmd test` before submitting changes.
 - For database schema changes, include a migration strategy and update integration tests.
 
