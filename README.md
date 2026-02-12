@@ -58,7 +58,7 @@ Browser (UI: HTML/CSS/JS) -> Spring Boot REST API -> Service Layer (business log
 
 ## License
 
-This project is for educational and portfolio purposes. Adjust license as needed.
+This project is for educational and portfolio purposes.
 
 ## Contributing
 
