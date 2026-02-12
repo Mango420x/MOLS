@@ -1,0 +1,46 @@
+package com.mls.logistics.domain;
+
+import jakarta.persistence.*;
+import java.util.List;
+
+/**
+ * Represents a Vehicle used for transporting shipments.
+ * Types: TERRESTRE, MARITIMO, AEREO
+ */
+@Entity
+@Table(name = "vehicles")
+public class Vehicle {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    /** Type of vehicle */
+    private String type;
+
+    /** Capacity (number of items, weight, etc.) */
+    private int capacity;
+
+    /** Status: AVAILABLE, IN_USE */
+    private String status;
+
+    /** Shipments assigned to this vehicle */
+    @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL)
+    private List<Shipment> shipments;
+
+    // Getters & Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
+    public int getCapacity() { return capacity; }
+    public void setCapacity(int capacity) { this.capacity = capacity; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public List<Shipment> getShipments() { return shipments; }
+    public void setShipments(List<Shipment> shipments) { this.shipments = shipments; }
+}

@@ -1,0 +1,39 @@
+package com.mls.logistics.domain;
+
+import jakarta.persistence.*;
+import java.util.List;
+
+/**
+ * Represents a Warehouse that stores resources (stock).
+ */
+@Entity
+@Table(name = "warehouses")
+public class Warehouse {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    /** Name of the warehouse */
+    private String name;
+
+    /** Location of the warehouse */
+    private String location;
+
+    /** Stock items in this warehouse */
+    @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL)
+    private List<Stock> stockItems;
+
+    // Getters & Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+
+    public List<Stock> getStockItems() { return stockItems; }
+    public void setStockItems(List<Stock> stockItems) { this.stockItems = stockItems; }
+}
