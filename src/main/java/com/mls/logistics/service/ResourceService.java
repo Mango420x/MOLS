@@ -1,6 +1,7 @@
 package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Resource;
+import com.mls.logistics.dto.request.CreateResourceRequest;
 import com.mls.logistics.repository.ResourceRepository;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +48,22 @@ public class ResourceService {
      * (e.g. resource availability checks).
      */
     public Resource createResource(Resource resource) {
+        return resourceRepository.save(resource);
+    }
+
+    /**
+     * Creates a new resource from a DTO request.
+     * 
+     * This method separates API contracts from domain logic.
+     *
+     * @param request DTO containing resource data
+     * @return created resource entity
+     */
+    public Resource createResource(CreateResourceRequest request) {
+        Resource resource = new Resource();
+        resource.setName(request.getName());
+        resource.setType(request.getType());
+        resource.setCriticality(request.getCriticality());
         return resourceRepository.save(resource);
     }
 }

@@ -1,11 +1,14 @@
 package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Stock;
+import com.mls.logistics.dto.request.CreateStockRequest;
+import com.mls.logistics.dto.response.StockResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.StockService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.stream.Collectors;
 
 import java.util.List;
 
@@ -38,8 +41,12 @@ public class StockController {
      * @return list of stock records
      */
     @GetMapping
-    public ResponseEntity<List<Stock>> getAllStocks() {
-        List<Stock> stocks = stockService.getAllStocks();
+    public ResponseEntity<List<StockResponse>> getAllStocks() {
+        List<StockResponse> stocks = stockService
+                .getAllStocks()
+                .stream()
+                .map(StockResponse::from)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(stocks);
     }
 
@@ -52,11 +59,11 @@ public class StockController {
     * @return stock if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Stock> getStockById(@PathVariable Long id) {
+    public ResponseEntity<StockResponse> getStockById(@PathVariable Long id) {
         Stock stock = stockService
                 .getStockById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Stock", "id", id));
-        return ResponseEntity.ok(stock);
+        return ResponseEntity.ok(StockResponse.from(stock));
     }
 
     /**
@@ -64,12 +71,12 @@ public class StockController {
      *
      * POST /api/stocks
      *
-     * @param stock stock entity to create
+     * @param request DTO containing stock data
      * @return created stock with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<Stock> createStock(@RequestBody Stock stock) {
-        Stock createdStock = stockService.createStock(stock);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdStock);
+    public ResponseEntity<StockResponse> createStock(@RequestBody CreateStockRequest request) {
+        Stock createdStock = stockService.createStock(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(StockResponse.from(createdStock));
     }
 }

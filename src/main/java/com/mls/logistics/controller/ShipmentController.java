@@ -1,11 +1,14 @@
 package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Shipment;
+import com.mls.logistics.dto.request.CreateShipmentRequest;
+import com.mls.logistics.dto.response.ShipmentResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.ShipmentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.stream.Collectors;
 
 import java.util.List;
 
@@ -38,8 +41,12 @@ public class ShipmentController {
      * @return list of shipments
      */
     @GetMapping
-    public ResponseEntity<List<Shipment>> getAllShipments() {
-        List<Shipment> shipments = shipmentService.getAllShipments();
+    public ResponseEntity<List<ShipmentResponse>> getAllShipments() {
+        List<ShipmentResponse> shipments = shipmentService
+                .getAllShipments()
+                .stream()
+                .map(ShipmentResponse::from)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(shipments);
     }
 
@@ -52,11 +59,11 @@ public class ShipmentController {
     * @return shipment if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Shipment> getShipmentById(@PathVariable Long id) {
+    public ResponseEntity<ShipmentResponse> getShipmentById(@PathVariable Long id) {
         Shipment shipment = shipmentService
                 .getShipmentById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Shipment", "id", id));
-        return ResponseEntity.ok(shipment);
+        return ResponseEntity.ok(ShipmentResponse.from(shipment));
     }
 
     /**
@@ -64,12 +71,12 @@ public class ShipmentController {
      *
      * POST /api/shipments
      *
-     * @param shipment shipment entity to create
+     * @param request DTO containing shipment data
      * @return created shipment with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<Shipment> createShipment(@RequestBody Shipment shipment) {
-        Shipment createdShipment = shipmentService.createShipment(shipment);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdShipment);
+    public ResponseEntity<ShipmentResponse> createShipment(@RequestBody CreateShipmentRequest request) {
+        Shipment createdShipment = shipmentService.createShipment(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ShipmentResponse.from(createdShipment));
     }
 }

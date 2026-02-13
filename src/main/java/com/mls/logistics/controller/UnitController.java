@@ -1,11 +1,14 @@
 package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Unit;
+import com.mls.logistics.dto.request.CreateUnitRequest;
+import com.mls.logistics.dto.response.UnitResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.UnitService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.stream.Collectors;
 
 import java.util.List;
 
@@ -38,8 +41,12 @@ public class UnitController {
      * @return list of units
      */
     @GetMapping
-    public ResponseEntity<List<Unit>> getAllUnits() {
-        List<Unit> units = unitService.getAllUnits();
+    public ResponseEntity<List<UnitResponse>> getAllUnits() {
+        List<UnitResponse> units = unitService
+                .getAllUnits()
+                .stream()
+                .map(UnitResponse::from)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(units);
     }
 
@@ -52,11 +59,11 @@ public class UnitController {
     * @return unit if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Unit> getUnitById(@PathVariable Long id) {
+    public ResponseEntity<UnitResponse> getUnitById(@PathVariable Long id) {
         Unit unit = unitService
                 .getUnitById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Unit", "id", id));
-        return ResponseEntity.ok(unit);
+        return ResponseEntity.ok(UnitResponse.from(unit));
     }
 
     /**
@@ -64,12 +71,12 @@ public class UnitController {
      *
      * POST /api/units
      *
-     * @param unit unit entity to create
+     * @param request DTO containing unit data
      * @return created unit with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<Unit> createUnit(@RequestBody Unit unit) {
-        Unit createdUnit = unitService.createUnit(unit);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdUnit);
+    public ResponseEntity<UnitResponse> createUnit(@RequestBody CreateUnitRequest request) {
+        Unit createdUnit = unitService.createUnit(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(UnitResponse.from(createdUnit));
     }
 }

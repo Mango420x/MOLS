@@ -3,6 +3,7 @@ package com.mls.logistics.service;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.repository.WarehouseRepository;
 import org.springframework.stereotype.Service;
+import com.mls.logistics.dto.request.CreateWarehouseRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +48,21 @@ public class WarehouseService {
      * (e.g. warehouse capacity validation).
      */
     public Warehouse createWarehouse(Warehouse warehouse) {
+        return warehouseRepository.save(warehouse);
+    }
+
+    /**
+     * Creates a new warehouse from a DTO request.
+     * 
+     * This method separates API contracts from domain logic.
+     *
+     * @param request DTO containing warehouse data
+     * @return created warehouse entity
+     */
+    public Warehouse createWarehouse(CreateWarehouseRequest request) {
+        Warehouse warehouse = new Warehouse();
+        warehouse.setName(request.getName());
+        warehouse.setLocation(request.getLocation());
         return warehouseRepository.save(warehouse);
     }
 }

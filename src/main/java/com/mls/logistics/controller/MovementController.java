@@ -1,11 +1,14 @@
 package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Movement;
+import com.mls.logistics.dto.request.CreateMovementRequest;
+import com.mls.logistics.dto.response.MovementResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.MovementService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.stream.Collectors;
 
 import java.util.List;
 
@@ -38,8 +41,12 @@ public class MovementController {
      * @return list of movement records
      */
     @GetMapping
-    public ResponseEntity<List<Movement>> getAllMovements() {
-        List<Movement> movements = movementService.getAllMovements();
+    public ResponseEntity<List<MovementResponse>> getAllMovements() {
+        List<MovementResponse> movements = movementService
+                .getAllMovements()
+                .stream()
+                .map(MovementResponse::from)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(movements);
     }
 
@@ -52,11 +59,11 @@ public class MovementController {
     * @return movement if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Movement> getMovementById(@PathVariable Long id) {
+    public ResponseEntity<MovementResponse> getMovementById(@PathVariable Long id) {
         Movement movement = movementService
                 .getMovementById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Movement", "id", id));
-        return ResponseEntity.ok(movement);
+        return ResponseEntity.ok(MovementResponse.from(movement));
     }
 
     /**
@@ -64,12 +71,12 @@ public class MovementController {
      *
      * POST /api/movements
      *
-     * @param movement movement entity to create
+     * @param request DTO containing movement data
      * @return created movement with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<Movement> createMovement(@RequestBody Movement movement) {
-        Movement createdMovement = movementService.createMovement(movement);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdMovement);
+    public ResponseEntity<MovementResponse> createMovement(@RequestBody CreateMovementRequest request) {
+        Movement createdMovement = movementService.createMovement(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(MovementResponse.from(createdMovement));
     }
 }

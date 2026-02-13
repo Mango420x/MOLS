@@ -1,11 +1,14 @@
 package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Vehicle;
+import com.mls.logistics.dto.request.CreateVehicleRequest;
+import com.mls.logistics.dto.response.VehicleResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.VehicleService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.stream.Collectors;
 
 import java.util.List;
 
@@ -38,8 +41,12 @@ public class VehicleController {
      * @return list of vehicles
      */
     @GetMapping
-    public ResponseEntity<List<Vehicle>> getAllVehicles() {
-        List<Vehicle> vehicles = vehicleService.getAllVehicles();
+    public ResponseEntity<List<VehicleResponse>> getAllVehicles() {
+        List<VehicleResponse> vehicles = vehicleService
+                .getAllVehicles()
+                .stream()
+                .map(VehicleResponse::from)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(vehicles);
     }
 
@@ -52,11 +59,11 @@ public class VehicleController {
     * @return vehicle if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Vehicle> getVehicleById(@PathVariable Long id) {
+    public ResponseEntity<VehicleResponse> getVehicleById(@PathVariable Long id) {
         Vehicle vehicle = vehicleService
                 .getVehicleById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Vehicle", "id", id));
-        return ResponseEntity.ok(vehicle);
+        return ResponseEntity.ok(VehicleResponse.from(vehicle));
     }
 
     /**
@@ -64,12 +71,12 @@ public class VehicleController {
      *
      * POST /api/vehicles
      *
-     * @param vehicle vehicle entity to create
+     * @param request DTO containing vehicle data
      * @return created vehicle with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<Vehicle> createVehicle(@RequestBody Vehicle vehicle) {
-        Vehicle createdVehicle = vehicleService.createVehicle(vehicle);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdVehicle);
+    public ResponseEntity<VehicleResponse> createVehicle(@RequestBody CreateVehicleRequest request) {
+        Vehicle createdVehicle = vehicleService.createVehicle(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(VehicleResponse.from(createdVehicle));
     }
 }

@@ -1,6 +1,7 @@
 package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Unit;
+import com.mls.logistics.dto.request.CreateUnitRequest;
 import com.mls.logistics.repository.UnitRepository;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +48,21 @@ public class UnitService {
      * (e.g. unique name validation).
      */
     public Unit createUnit(Unit unit) {
+        return unitRepository.save(unit);
+    }
+
+    /**
+     * Creates a new unit from a DTO request.
+     * 
+     * This method separates API contracts from domain logic.
+     *
+     * @param request DTO containing unit data
+     * @return created unit entity
+     */
+    public Unit createUnit(CreateUnitRequest request) {
+        Unit unit = new Unit();
+        unit.setName(request.getName());
+        unit.setLocation(request.getLocation());
         return unitRepository.save(unit);
     }
 }

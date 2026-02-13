@@ -6,6 +6,9 @@ import com.mls.logistics.service.WarehouseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.mls.logistics.dto.request.CreateWarehouseRequest;
+import com.mls.logistics.dto.response.WarehouseResponse;
+import java.util.stream.Collectors;
 
 import java.util.List;
 
@@ -38,8 +41,12 @@ public class WarehouseController {
      * @return list of warehouses
      */
     @GetMapping
-    public ResponseEntity<List<Warehouse>> getAllWarehouses() {
-        List<Warehouse> warehouses = warehouseService.getAllWarehouses();
+    public ResponseEntity<List<WarehouseResponse>> getAllWarehouses() {
+        List<WarehouseResponse> warehouses = warehouseService
+                .getAllWarehouses()
+                .stream()
+                .map(WarehouseResponse::from)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(warehouses);
     }
 
@@ -52,11 +59,11 @@ public class WarehouseController {
     * @return warehouse if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Warehouse> getWarehouseById(@PathVariable Long id) {
+    public ResponseEntity<WarehouseResponse> getWarehouseById(@PathVariable Long id) {
         Warehouse warehouse = warehouseService
                 .getWarehouseById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Warehouse", "id", id));
-        return ResponseEntity.ok(warehouse);
+        return ResponseEntity.ok(WarehouseResponse.from(warehouse));
     }
     
     /**
@@ -68,8 +75,11 @@ public class WarehouseController {
      * @return created warehouse with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<Warehouse> createWarehouse(@RequestBody Warehouse warehouse) {
-        Warehouse createdWarehouse = warehouseService.createWarehouse(warehouse);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdWarehouse);
+    public ResponseEntity<WarehouseResponse> createWarehouse(
+            @RequestBody CreateWarehouseRequest request) {
+        Warehouse createdWarehouse = warehouseService.createWarehouse(request);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(WarehouseResponse.from(createdWarehouse));
     }
 }

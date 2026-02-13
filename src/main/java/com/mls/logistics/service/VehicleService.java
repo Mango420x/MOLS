@@ -1,6 +1,7 @@
 package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Vehicle;
+import com.mls.logistics.dto.request.CreateVehicleRequest;
 import com.mls.logistics.repository.VehicleRepository;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +48,22 @@ public class VehicleService {
      * (e.g. vehicle maintenance checks).
      */
     public Vehicle createVehicle(Vehicle vehicle) {
+        return vehicleRepository.save(vehicle);
+    }
+
+    /**
+     * Creates a new vehicle from a DTO request.
+     * 
+     * This method separates API contracts from domain logic.
+     *
+     * @param request DTO containing vehicle data
+     * @return created vehicle entity
+     */
+    public Vehicle createVehicle(CreateVehicleRequest request) {
+        Vehicle vehicle = new Vehicle();
+        vehicle.setType(request.getType());
+        vehicle.setCapacity(request.getCapacity());
+        vehicle.setStatus(request.getStatus());
         return vehicleRepository.save(vehicle);
     }
 }

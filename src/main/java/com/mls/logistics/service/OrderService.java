@@ -1,6 +1,8 @@
 package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Order;
+import com.mls.logistics.domain.Unit;
+import com.mls.logistics.dto.request.CreateOrderRequest;
 import com.mls.logistics.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +49,27 @@ public class OrderService {
      * (e.g. order validation, price calculations).
      */
     public Order createOrder(Order order) {
+        return orderRepository.save(order);
+    }
+
+    /**
+     * Creates a new order from a DTO request.
+     * 
+     * This method separates API contracts from domain logic.
+     *
+     * @param request DTO containing order data
+     * @return created order entity
+     */
+    public Order createOrder(CreateOrderRequest request) {
+        Order order = new Order();
+
+        Unit unit = new Unit();
+        unit.setId(request.getUnitId());
+
+        order.setUnit(unit);
+        order.setDateCreated(request.getDateCreated());
+        order.setStatus(request.getStatus());
+
         return orderRepository.save(order);
     }
 }

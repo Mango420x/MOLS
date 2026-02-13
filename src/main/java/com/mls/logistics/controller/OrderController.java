@@ -1,11 +1,14 @@
 package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Order;
+import com.mls.logistics.dto.request.CreateOrderRequest;
+import com.mls.logistics.dto.response.OrderResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.OrderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.stream.Collectors;
 
 import java.util.List;
 
@@ -38,8 +41,12 @@ public class OrderController {
      * @return list of orders
      */
     @GetMapping
-    public ResponseEntity<List<Order>> getAllOrders() {
-        List<Order> orders = orderService.getAllOrders();
+    public ResponseEntity<List<OrderResponse>> getAllOrders() {
+        List<OrderResponse> orders = orderService
+                .getAllOrders()
+                .stream()
+                .map(OrderResponse::from)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(orders);
     }
 
@@ -52,11 +59,11 @@ public class OrderController {
     * @return order if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Order> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long id) {
         Order order = orderService
                 .getOrderById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Order", "id", id));
-        return ResponseEntity.ok(order);
+        return ResponseEntity.ok(OrderResponse.from(order));
     }
 
     /**
@@ -64,12 +71,12 @@ public class OrderController {
      *
      * POST /api/orders
      *
-     * @param order order entity to create
+     * @param request DTO containing order data
      * @return created order with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<Order> createOrder(@RequestBody Order order) {
-        Order createdOrder = orderService.createOrder(order);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
+    public ResponseEntity<OrderResponse> createOrder(@RequestBody CreateOrderRequest request) {
+        Order createdOrder = orderService.createOrder(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(OrderResponse.from(createdOrder));
     }
 }

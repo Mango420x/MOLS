@@ -1,6 +1,9 @@
 package com.mls.logistics.service;
 
+import com.mls.logistics.domain.Resource;
 import com.mls.logistics.domain.Stock;
+import com.mls.logistics.domain.Warehouse;
+import com.mls.logistics.dto.request.CreateStockRequest;
 import com.mls.logistics.repository.StockRepository;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +50,30 @@ public class StockService {
      * (e.g. inventory management and thresholds).
      */
     public Stock createStock(Stock stock) {
+        return stockRepository.save(stock);
+    }
+
+    /**
+     * Creates a new stock from a DTO request.
+     * 
+     * This method separates API contracts from domain logic.
+     *
+     * @param request DTO containing stock data
+     * @return created stock entity
+     */
+    public Stock createStock(CreateStockRequest request) {
+        Stock stock = new Stock();
+
+        Resource resource = new Resource();
+        resource.setId(request.getResourceId());
+
+        Warehouse warehouse = new Warehouse();
+        warehouse.setId(request.getWarehouseId());
+
+        stock.setResource(resource);
+        stock.setWarehouse(warehouse);
+        stock.setQuantity(request.getQuantity());
+
         return stockRepository.save(stock);
     }
 }

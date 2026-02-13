@@ -1,6 +1,8 @@
 package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Movement;
+import com.mls.logistics.domain.Stock;
+import com.mls.logistics.dto.request.CreateMovementRequest;
 import com.mls.logistics.repository.MovementRepository;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +49,28 @@ public class MovementService {
      * (e.g. validation of movement types).
      */
     public Movement createMovement(Movement movement) {
+        return movementRepository.save(movement);
+    }
+
+    /**
+     * Creates a new movement from a DTO request.
+     * 
+     * This method separates API contracts from domain logic.
+     *
+     * @param request DTO containing movement data
+     * @return created movement entity
+     */
+    public Movement createMovement(CreateMovementRequest request) {
+        Movement movement = new Movement();
+
+        Stock stock = new Stock();
+        stock.setId(request.getStockId());
+
+        movement.setStock(stock);
+        movement.setType(request.getType());
+        movement.setQuantity(request.getQuantity());
+        movement.setDateTime(request.getDateTime());
+
         return movementRepository.save(movement);
     }
 }

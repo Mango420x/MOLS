@@ -1,6 +1,10 @@
 package com.mls.logistics.service;
 
+import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.Shipment;
+import com.mls.logistics.domain.Vehicle;
+import com.mls.logistics.domain.Warehouse;
+import com.mls.logistics.dto.request.CreateShipmentRequest;
 import com.mls.logistics.repository.ShipmentRepository;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +51,34 @@ public class ShipmentService {
      * (e.g. shipment tracking and status updates).
      */
     public Shipment createShipment(Shipment shipment) {
+        return shipmentRepository.save(shipment);
+    }
+
+    /**
+     * Creates a new shipment from a DTO request.
+     * 
+     * This method separates API contracts from domain logic.
+     *
+     * @param request DTO containing shipment data
+     * @return created shipment entity
+     */
+    public Shipment createShipment(CreateShipmentRequest request) {
+        Shipment shipment = new Shipment();
+
+        Order order = new Order();
+        order.setId(request.getOrderId());
+
+        Vehicle vehicle = new Vehicle();
+        vehicle.setId(request.getVehicleId());
+
+        Warehouse warehouse = new Warehouse();
+        warehouse.setId(request.getWarehouseId());
+
+        shipment.setOrder(order);
+        shipment.setVehicle(vehicle);
+        shipment.setWarehouse(warehouse);
+        shipment.setStatus(request.getStatus());
+
         return shipmentRepository.save(shipment);
     }
 }

@@ -1,11 +1,14 @@
 package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Resource;
+import com.mls.logistics.dto.request.CreateResourceRequest;
+import com.mls.logistics.dto.response.ResourceResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.ResourceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.stream.Collectors;
 
 import java.util.List;
 
@@ -38,8 +41,12 @@ public class ResourceController {
      * @return list of resources
      */
     @GetMapping
-    public ResponseEntity<List<Resource>> getAllResources() {
-        List<Resource> resources = resourceService.getAllResources();
+    public ResponseEntity<List<ResourceResponse>> getAllResources() {
+        List<ResourceResponse> resources = resourceService
+                .getAllResources()
+                .stream()
+                .map(ResourceResponse::from)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(resources);
     }
 
@@ -52,11 +59,11 @@ public class ResourceController {
     * @return resource if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Resource> getResourceById(@PathVariable Long id) {
+    public ResponseEntity<ResourceResponse> getResourceById(@PathVariable Long id) {
         Resource resource = resourceService
                 .getResourceById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Resource", "id", id));
-        return ResponseEntity.ok(resource);
+        return ResponseEntity.ok(ResourceResponse.from(resource));
     }
 
     /**
@@ -64,12 +71,12 @@ public class ResourceController {
      *
      * POST /api/resources
      *
-     * @param resource resource entity to create
+     * @param request DTO containing resource data
      * @return created resource with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<Resource> createResource(@RequestBody Resource resource) {
-        Resource createdResource = resourceService.createResource(resource);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdResource);
+    public ResponseEntity<ResourceResponse> createResource(@RequestBody CreateResourceRequest request) {
+        Resource createdResource = resourceService.createResource(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ResourceResponse.from(createdResource));
     }
 }

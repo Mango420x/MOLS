@@ -1,6 +1,9 @@
 package com.mls.logistics.service;
 
 import com.mls.logistics.domain.OrderItem;
+import com.mls.logistics.domain.Order;
+import com.mls.logistics.domain.Resource;
+import com.mls.logistics.dto.request.CreateOrderItemRequest;
 import com.mls.logistics.repository.OrderItemRepository;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +50,30 @@ public class OrderItemService {
      * (e.g. item quantity validation).
      */
     public OrderItem createOrderItem(OrderItem orderItem) {
+        return orderItemRepository.save(orderItem);
+    }
+
+    /**
+     * Creates a new order item from a DTO request.
+     * 
+     * This method separates API contracts from domain logic.
+     *
+     * @param request DTO containing order item data
+     * @return created order item entity
+     */
+    public OrderItem createOrderItem(CreateOrderItemRequest request) {
+        OrderItem orderItem = new OrderItem();
+
+        Order order = new Order();
+        order.setId(request.getOrderId());
+
+        Resource resource = new Resource();
+        resource.setId(request.getResourceId());
+
+        orderItem.setOrder(order);
+        orderItem.setResource(resource);
+        orderItem.setQuantity(request.getQuantity());
+
         return orderItemRepository.save(orderItem);
     }
 }

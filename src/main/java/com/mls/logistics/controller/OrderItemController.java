@@ -1,11 +1,14 @@
 package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.OrderItem;
+import com.mls.logistics.dto.request.CreateOrderItemRequest;
+import com.mls.logistics.dto.response.OrderItemResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.OrderItemService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.stream.Collectors;
 
 import java.util.List;
 
@@ -38,8 +41,12 @@ public class OrderItemController {
      * @return list of order items
      */
     @GetMapping
-    public ResponseEntity<List<OrderItem>> getAllOrderItems() {
-        List<OrderItem> orderItems = orderItemService.getAllOrderItems();
+    public ResponseEntity<List<OrderItemResponse>> getAllOrderItems() {
+        List<OrderItemResponse> orderItems = orderItemService
+                .getAllOrderItems()
+                .stream()
+                .map(OrderItemResponse::from)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(orderItems);
     }
 
@@ -52,11 +59,11 @@ public class OrderItemController {
     * @return order item if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
     @GetMapping("/{id}")
-    public ResponseEntity<OrderItem> getOrderItemById(@PathVariable Long id) {
+    public ResponseEntity<OrderItemResponse> getOrderItemById(@PathVariable Long id) {
         OrderItem orderItem = orderItemService
                 .getOrderItemById(id)
             .orElseThrow(() -> new ResourceNotFoundException("OrderItem", "id", id));
-        return ResponseEntity.ok(orderItem);
+        return ResponseEntity.ok(OrderItemResponse.from(orderItem));
     }
 
     /**
@@ -64,12 +71,12 @@ public class OrderItemController {
      *
      * POST /api/order-items
      *
-     * @param orderItem order item entity to create
+     * @param request DTO containing order item data
      * @return created order item with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<OrderItem> createOrderItem(@RequestBody OrderItem orderItem) {
-        OrderItem createdOrderItem = orderItemService.createOrderItem(orderItem);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdOrderItem);
+    public ResponseEntity<OrderItemResponse> createOrderItem(@RequestBody CreateOrderItemRequest request) {
+        OrderItem createdOrderItem = orderItemService.createOrderItem(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(OrderItemResponse.from(createdOrderItem));
     }
 }
