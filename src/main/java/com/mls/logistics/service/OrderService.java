@@ -5,6 +5,7 @@ import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateOrderRequest;
 import com.mls.logistics.repository.OrderRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +17,7 @@ import java.util.Optional;
  * enforcing business rules and application logic.
  */
 @Service
+@Transactional(readOnly = true)
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -48,6 +50,7 @@ public class OrderService {
      * Business rules can be added here in the future
      * (e.g. order validation, price calculations).
      */
+    @Transactional
     public Order createOrder(Order order) {
         return orderRepository.save(order);
     }
@@ -60,6 +63,7 @@ public class OrderService {
      * @param request DTO containing order data
      * @return created order entity
      */
+    @Transactional
     public Order createOrder(CreateOrderRequest request) {
         Order order = new Order();
 

@@ -4,6 +4,7 @@ import com.mls.logistics.domain.Vehicle;
 import com.mls.logistics.dto.request.CreateVehicleRequest;
 import com.mls.logistics.repository.VehicleRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,7 @@ import java.util.Optional;
  * enforcing business rules and application logic.
  */
 @Service
+@Transactional(readOnly = true)
 public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
@@ -47,6 +49,7 @@ public class VehicleService {
      * Business rules can be added here in the future
      * (e.g. vehicle maintenance checks).
      */
+    @Transactional
     public Vehicle createVehicle(Vehicle vehicle) {
         return vehicleRepository.save(vehicle);
     }
@@ -59,6 +62,7 @@ public class VehicleService {
      * @param request DTO containing vehicle data
      * @return created vehicle entity
      */
+    @Transactional
     public Vehicle createVehicle(CreateVehicleRequest request) {
         Vehicle vehicle = new Vehicle();
         vehicle.setType(request.getType());

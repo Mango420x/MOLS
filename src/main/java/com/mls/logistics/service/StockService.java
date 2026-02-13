@@ -6,6 +6,7 @@ import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateStockRequest;
 import com.mls.logistics.repository.StockRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +18,7 @@ import java.util.Optional;
  * enforcing business rules and application logic.
  */
 @Service
+@Transactional(readOnly = true)
 public class StockService {
 
     private final StockRepository stockRepository;
@@ -49,6 +51,7 @@ public class StockService {
      * Business rules can be added here in the future
      * (e.g. inventory management and thresholds).
      */
+    @Transactional
     public Stock createStock(Stock stock) {
         return stockRepository.save(stock);
     }
@@ -61,6 +64,7 @@ public class StockService {
      * @param request DTO containing stock data
      * @return created stock entity
      */
+    @Transactional
     public Stock createStock(CreateStockRequest request) {
         Stock stock = new Stock();
 

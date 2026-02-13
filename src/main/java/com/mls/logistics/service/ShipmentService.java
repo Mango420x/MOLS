@@ -7,6 +7,7 @@ import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateShipmentRequest;
 import com.mls.logistics.repository.ShipmentRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +19,7 @@ import java.util.Optional;
  * enforcing business rules and application logic.
  */
 @Service
+@Transactional(readOnly = true)
 public class ShipmentService {
 
     private final ShipmentRepository shipmentRepository;
@@ -50,6 +52,7 @@ public class ShipmentService {
      * Business rules can be added here in the future
      * (e.g. shipment tracking and status updates).
      */
+    @Transactional
     public Shipment createShipment(Shipment shipment) {
         return shipmentRepository.save(shipment);
     }
@@ -62,6 +65,7 @@ public class ShipmentService {
      * @param request DTO containing shipment data
      * @return created shipment entity
      */
+    @Transactional
     public Shipment createShipment(CreateShipmentRequest request) {
         Shipment shipment = new Shipment();
 

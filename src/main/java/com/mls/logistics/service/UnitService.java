@@ -4,6 +4,7 @@ import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateUnitRequest;
 import com.mls.logistics.repository.UnitRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,7 @@ import java.util.Optional;
  * enforcing business rules and application logic.
  */
 @Service
+@Transactional(readOnly = true)
 public class UnitService {
 
     private final UnitRepository unitRepository;
@@ -47,6 +49,7 @@ public class UnitService {
      * Business rules can be added here in the future
      * (e.g. unique name validation).
      */
+    @Transactional
     public Unit createUnit(Unit unit) {
         return unitRepository.save(unit);
     }
@@ -59,6 +62,7 @@ public class UnitService {
      * @param request DTO containing unit data
      * @return created unit entity
      */
+    @Transactional
     public Unit createUnit(CreateUnitRequest request) {
         Unit unit = new Unit();
         unit.setName(request.getName());

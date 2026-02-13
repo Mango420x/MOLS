@@ -4,6 +4,7 @@ import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.repository.WarehouseRepository;
 import org.springframework.stereotype.Service;
 import com.mls.logistics.dto.request.CreateWarehouseRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,7 @@ import java.util.Optional;
  * enforcing business rules and application logic.
  */
 @Service
+@Transactional(readOnly = true)  // Default for all methods
 public class WarehouseService {
 
     private final WarehouseRepository warehouseRepository;
@@ -47,6 +49,7 @@ public class WarehouseService {
      * Business rules can be added here in the future
      * (e.g. warehouse capacity validation).
      */
+    @Transactional
     public Warehouse createWarehouse(Warehouse warehouse) {
         return warehouseRepository.save(warehouse);
     }
@@ -59,6 +62,7 @@ public class WarehouseService {
      * @param request DTO containing warehouse data
      * @return created warehouse entity
      */
+    @Transactional  // Overrides class-level readOnly=true
     public Warehouse createWarehouse(CreateWarehouseRequest request) {
         Warehouse warehouse = new Warehouse();
         warehouse.setName(request.getName());

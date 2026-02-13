@@ -4,6 +4,7 @@ import com.mls.logistics.domain.Resource;
 import com.mls.logistics.dto.request.CreateResourceRequest;
 import com.mls.logistics.repository.ResourceRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,7 @@ import java.util.Optional;
  * enforcing business rules and application logic.
  */
 @Service
+@Transactional(readOnly = true)
 public class ResourceService {
 
     private final ResourceRepository resourceRepository;
@@ -47,6 +49,7 @@ public class ResourceService {
      * Business rules can be added here in the future
      * (e.g. resource availability checks).
      */
+    @Transactional
     public Resource createResource(Resource resource) {
         return resourceRepository.save(resource);
     }
@@ -59,6 +62,7 @@ public class ResourceService {
      * @param request DTO containing resource data
      * @return created resource entity
      */
+    @Transactional
     public Resource createResource(CreateResourceRequest request) {
         Resource resource = new Resource();
         resource.setName(request.getName());
