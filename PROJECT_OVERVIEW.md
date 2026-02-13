@@ -1,74 +1,276 @@
 # MOLS — Project Overview
 
-Purpose
-- MOLS (Multimodal Logistics System) provides backend services and a simple web UI for managing logistics: units, warehouses, resources, stock, orders, shipments and vehicles.
+## Purpose
+- MOLS (Multimodal Operative Logistics System) is a backend-centric logistics management system designed with an industrial/defense-grade engineering mindset.
+- Provides REST API services for managing logistics operations: units, warehouses, resources, stock, orders, shipments, vehicles, and movement auditing.
+- Portfolio-grade backend demonstrating clean architecture, strict layering, auditability, and deterministic behavior.
 
-Project status
-- Codebase: Java Spring Boot, sources under `src/main/java/com/mls/logistics`.
-- Entrypoint: `com.mls.logistics.LogisticsApplication`.
-- Domain & Persistence: JPA entities and Spring Data repositories under `src/main/java/com/mls/logistics/domain` and `.../repository`.
-- Service Layer: Business logic services under `src/main/java/com/mls/logistics/service` for all domain entities.
-- Tests: unit and integration tests in `src/test/java`; test reports in `target/surefire-reports`.
-- Build: Maven wrapper present (`mvnw`, `mvnw.cmd`); build artifacts in `target/`.
-- Note: an IDE run previously exited with a non-zero code; check runtime logs and `target/surefire-reports` for failures.
+## Project Status
+- **Runtime**: Spring Boot 4.x application running on Java 21, connected to PostgreSQL database.
+- **Codebase**: Java sources under `src/main/java/com/mls/logistics`.
+- **Entry Point**: `com.mls.logistics.LogisticsApplication`.
+- **Architecture**: Classic four-layer architecture strictly enforced (Controllers → Services → Repositories → Database).
+- **Database**: PostgreSQL 18.1 (`logistics_db` database, `logistics_user` credentials configured).
+- **API Status**: Full REST API implemented and operational at `http://localhost:8080/api/*`.
+- **Build**: Maven wrapper present (`mvnw`, `mvnw.cmd`); build artifacts in `target/`.
+- **Testing**: Test structure exists under `src/test/java`; integration with H2 planned.
 
-What this repository contains
-- Backend: Spring Boot application with a three-layer architecture:
-  - **Domain Layer** (`domain/`): JPA entities representing the core business model.
-  - **Repository Layer** (`repository/`): Spring Data repositories for database persistence.
-  - **Service Layer** (`service/`): Business logic services for each domain entity, acting as intermediaries between controllers and repositories.
-- Lightweight UI: static HTML/CSS/JS under `src/main/resources/static` (if present).
-- Tests, configuration, and Maven build files (`pom.xml`).
+## What This Repository Contains
 
-Where to start (for a new developer)
-1. Read this file and `README.md` for project conventions.
-2. Inspect the domain model in `src/main/java/com/mls/logistics/domain` to understand entities and relationships.
-3. Review the service layer in `src/main/java/com/mls/logistics/service` to see how business logic is organized.
-4. Run tests locally:
+### Backend: Four-Layer Architecture
 
-```powershell
-./mvnw.cmd test
+#### 1. **REST Controller Layer** (`controller/`)
+REST API endpoints exposing HTTP interfaces for all domain entities:
+- `WarehouseController` — `/api/warehouses`
+- `UnitController` — `/api/units`
+- `ResourceController` — `/api/resources`
+- `StockController` — `/api/stocks`
+- `OrderController` — `/api/orders`
+- `OrderItemController` — `/api/order-items`
+- `VehicleController` — `/api/vehicles`
+- `ShipmentController` — `/api/shipments`
+- `MovementController` — `/api/movements`
+
+**Controller Responsibilities**:
+- HTTP request/response handling only
+- No business logic (delegated to services)
+- No direct repository access
+- Constructor-based dependency injection
+- Proper HTTP status codes (200 OK, 201 Created, 404 Not Found)
+- Optional resolution at HTTP boundary
+
+#### 2. **Service Layer** (`service/`)
+Business logic services for each domain entity. Services are the source of truth for all business operations.
+
+**Standard Service Methods**:
+- `getAll{Entity}()` — retrieves all records
+- `get{Entity}ById(Long id)` — returns `Optional<Entity>`
+- `create{Entity}(Entity entity)` — creates new record
+
+**Service Classes**:
+- `WarehouseService`, `UnitService`, `ResourceService`, `StockService`
+- `OrderService`, `OrderItemService`, `VehicleService`, `ShipmentService`, `MovementService`
+
+**Note**: `@Transactional` boundaries planned for future implementation.
+
+#### 3. **Repository Layer** (`repository/`)
+Spring Data JPA repositories handling only persistence operations.
+- 9 repository interfaces extending `CrudRepository`
+- No business logic allowed
+
+#### 4. **Domain Layer** (`domain/`)
+JPA entities representing the core business model. All entities exist and are mapped:
+- `Unit`, `Warehouse`, `Resource`, `Stock`
+- `Order`, `OrderItem`, `Vehicle`, `Shipment`, `Movement`
+
+### Configuration
+- **Database**: PostgreSQL configured in `src/main/resources/application.properties`
+- **Credentials**: Hardcoded for development (no environment variables yet)
+- **Hibernate**: `ddl-auto=update` — auto-creates schema on startup
+- **Port**: Application runs on `8080`
+
+## Where to Start (For a New Developer)
+
+1. **Read Documentation**:
+   - This file and `README.md` for project conventions
+   - Review the `PROJECT_CONTEXT.md` for detailed architecture rules
+
+2. **Understand the Domain Model**:
+   - Inspect entities in `src/main/java/com/mls/logistics/domain`
+   - All entities use constructor-based relationships
+
+3. **Review the API**:
+   - All controllers follow identical patterns
+   - Check `WarehouseController` as the reference implementation
+
+4. **Setup Database**:
+   ```powershell
+   # Ensure PostgreSQL is running with logistics_db database
+   # User: logistics_user, Password: logistics123
+   ```
+
+5. **Build and Run**:
+   ```powershell
+   ./mvnw.cmd clean install
+   ./mvnw.cmd spring-boot:run
+   ```
+
+6. **Test the API**:
+   ```bash
+   # Get all warehouses
+   curl http://localhost:8080/api/warehouses
+   
+   # Create a warehouse
+   curl -X POST http://localhost:8080/api/warehouses \
+     -H "Content-Type: application/json" \
+     -d '{"name":"Central","location":"Madrid"}'
+   ```
+
+7. **Run Tests** (when available):
+   ```powershell
+   ./mvnw.cmd test
+   ```
+
+## Key Domain Concepts
+
+- **`Unit`** — Organizational branch requesting resources (has location, name)
+- **`Warehouse`** — Physical storage location for resources (has location, name)
+- **`Resource`** — Item, part, or material (has type, criticality)
+- **`Stock`** — Quantity of a resource in a warehouse (links Resource ↔ Warehouse)
+- **`Order`** — Request placed by a Unit (has status, date)
+- **`OrderItem`** — Individual line item in an order (links Order ↔ Resource, has quantity)
+- **`Vehicle`** — Transport asset: land/air/sea (has type, capacity, status)
+- **`Shipment`** — Assignment of resources to a vehicle (links Order ↔ Vehicle ↔ Warehouse)
+- **`Movement`** — Audit record of stock changes (tracks type, quantity, datetime)
+
+## Important Business Rules (Conceptual)
+
+These rules are **enforced in services**, not controllers:
+
+1. Stock must never go negative
+2. Orders must not exceed available stock
+3. Every stock change must generate a Movement record
+4. Vehicles must be compatible with shipment transport type
+5. Orders are complete only when fully delivered
+
+**Note**: Full validation implementation is planned for future phases.
+
+## Developer Guidelines
+
+### Architecture Rules (STRICTLY ENFORCED)
+
+**Controllers**:
+- ❌ NO business logic
+- ❌ NO validation
+- ❌ NO repository access
+- ✅ ONLY HTTP request/response handling
+- ✅ MUST use `ResponseEntity`
+- ✅ MUST resolve `Optional` at HTTP boundary
+
+**Services**:
+- ✅ ALL business logic here
+- ✅ Constructor-based dependency injection
+- ✅ Method names must match existing pattern
+- ❌ NO direct HTTP concerns
+
+**Repositories**:
+- ✅ ONLY persistence operations
+- ✅ Spring Data JPA interfaces
+- ❌ NO business logic
+
+**Domain Entities**:
+- ✅ JPA annotations only
+- ✅ Relationships mapped with `@ManyToOne`, `@OneToMany`, etc.
+- ❌ NO business logic
+
+### Code Style
+
+- **Language**: All code and comments in English
+- **Injection**: Constructor-based only (no field injection)
+- **Naming**: Explicit naming preferred over abstractions
+- **Comments**: Explain WHY, not WHAT
+- **Philosophy**: Clarity over cleverness, determinism over convenience
+
+### Git Discipline
+
+- Small, meaningful commits
+- Descriptive commit messages
+- Each commit represents a coherent change
+- Follow conventional commits format when possible
+
+### Package Structure
+
+```
+src/main/java/com/mls/logistics/
+├── controller/      # REST API controllers (9 files)
+├── domain/          # JPA entities (9 entities)
+├── repository/      # Spring Data repositories (9 interfaces)
+├── service/         # Business logic services (9 services)
+├── exception/       # Custom exceptions (planned)
+├── dto/             # DTOs for API contracts (planned)
+└── LogisticsApplication.java
 ```
 
-5. Build and run the application locally:
+## Current Implementation Status
 
-```powershell
-./mvnw.cmd clean install
-./mvnw.cmd spring-boot:run
+### ✅ Completed
+- [x] Domain model (all 9 entities)
+- [x] Repository layer (all 9 repositories)
+- [x] Service layer (all 9 services)
+- [x] Controller layer (all 9 controllers)
+- [x] PostgreSQL database configuration
+- [x] Hibernate schema auto-generation
+- [x] Basic REST API (GET all, GET by ID, POST create)
+
+### 🚧 Planned (In Order)
+1. Global exception handling (`@ControllerAdvice`)
+2. DTOs for POST requests
+3. Transactional boundaries (`@Transactional`)
+4. Input validation (`@Valid`, Bean Validation)
+5. Additional CRUD operations (PUT, DELETE)
+6. Security (authentication/authorization)
+7. Comprehensive testing (unit + integration)
+8. Dockerization
+9. CI/CD pipeline
+
+## API Endpoints Reference
+
+All endpoints follow RESTful conventions:
+
+| Entity | Base Path | GET All | GET by ID | POST Create |
+|--------|-----------|---------|-----------|-------------|
+| Warehouse | `/api/warehouses` | ✅ | ✅ | ✅ |
+| Unit | `/api/units` | ✅ | ✅ | ✅ |
+| Resource | `/api/resources` | ✅ | ✅ | ✅ |
+| Stock | `/api/stocks` | ✅ | ✅ | ✅ |
+| Order | `/api/orders` | ✅ | ✅ | ✅ |
+| OrderItem | `/api/order-items` | ✅ | ✅ | ✅ |
+| Vehicle | `/api/vehicles` | ✅ | ✅ | ✅ |
+| Shipment | `/api/shipments` | ✅ | ✅ | ✅ |
+| Movement | `/api/movements` | ✅ | ✅ | ✅ |
+
+## Troubleshooting
+
+### Application Won't Start
+- Check PostgreSQL is running: `psql -U logistics_user -d logistics_db`
+- Verify credentials in `application.properties`
+- Check logs for Hibernate schema creation errors
+
+### Database Permission Errors
+```sql
+-- Grant schema privileges (as postgres user)
+GRANT ALL ON SCHEMA public TO logistics_user;
+ALTER DATABASE logistics_db OWNER TO logistics_user;
 ```
 
-Key domain concepts (summary)
-- `Unit` — organization/branch requesting resources.
-- `Warehouse` — storage location for `Resource`s.
-- `Resource` — item or part.
-- `Stock` — quantity of a resource at a warehouse.
-- `Order` / `OrderItem` — placed by `Unit` to request resources.
-- `Vehicle` — transport asset (terrestrial/maritime/aerial).
-- `Shipment` — resources assigned to a `Vehicle`.
-- `Movement` — audit record for changes to `Stock`.
+### Port Already in Use
+- Change port in `application.properties`: `server.port=8081`
+- Or kill process using port 8080
 
-Important business rules
-- Orders must not exceed available stock.
-- Stock cannot be negative; each stock change produces a `Movement` record.
-- Vehicles must be available and compatible with the shipment transport type.
-- Orders are complete only when all items are delivered.
+### Maven Build Fails
+```powershell
+./mvnw.cmd clean install -U  # Force update dependencies
+```
 
-Developer guidelines
-- **Architecture**: Follow the three-layer pattern:
-  - **Domain**: Pure entity classes with JPA annotations.
-  - **Repository**: Data access interfaces extending Spring Data `CrudRepository`.
-  - **Service**: Business logic, validation, and orchestration (constructor-based dependency injection recommended).
-- Keep business logic in services; repositories should be focused on persistence queries.
-- All domain entities have corresponding service classes (`*Service`) with standard methods: `getAll()`, `getById()`, and `create()`.
-- Add unit tests for new behavior under `src/test/java` and run `./mvnw.cmd test` before submitting changes.
-- For database schema changes, include a migration strategy and update integration tests.
+## Technology Stack
 
-Troubleshooting
-- If startup fails: check the IDE/terminal logs and `target/surefire-reports` for test failures.
-- If DB issues appear, verify local PostgreSQL configuration or switch tests to H2 as configured.
+- **Language**: Java 21
+- **Framework**: Spring Boot 4.0.2
+- **Database**: PostgreSQL 18.1
+- **ORM**: Hibernate 7.2.1 (JPA)
+- **Build Tool**: Maven 3.x (wrapper included)
+- **IDE**: VS Code (NOT IntelliJ)
+- **OS**: Windows 11
+- **Version Control**: GitHub (via GitHub Desktop)
 
-Contacts and next steps
-- See `README.md` and `pom.xml` for maintainer and project conventions.
-- Recommended immediate actions for contributors: run the test suite, fix failing tests if any, or submit small PRs for documentation improvements.
+## Contacts and Next Steps
 
-Last updated: 2026-02-12
+- **Maintainer**: See `pom.xml` for project details
+- **Documentation**: `README.md`, `PROJECT_CONTEXT.md`
+- **Recommended Actions**:
+  - Test all API endpoints with Postman/cURL
+  - Implement exception handling layer
+  - Add DTOs to separate API contracts from domain model
+  - Write controller tests
+
+**Last updated**: 2026-02-13
