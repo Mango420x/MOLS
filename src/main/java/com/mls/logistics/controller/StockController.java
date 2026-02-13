@@ -1,6 +1,7 @@
 package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Stock;
+import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.StockService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,14 +49,14 @@ public class StockController {
      * GET /api/stocks/{id}
      *
      * @param id stock identifier
-     * @return stock if found, or 404 if not
+    * @return stock if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
     @GetMapping("/{id}")
     public ResponseEntity<Stock> getStockById(@PathVariable Long id) {
-        return stockService
+        Stock stock = stockService
                 .getStockById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+            .orElseThrow(() -> new ResourceNotFoundException("Stock", "id", id));
+        return ResponseEntity.ok(stock);
     }
 
     /**

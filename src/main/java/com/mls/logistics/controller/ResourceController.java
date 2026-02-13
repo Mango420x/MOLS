@@ -1,6 +1,7 @@
 package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Resource;
+import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.ResourceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,14 +49,14 @@ public class ResourceController {
      * GET /api/resources/{id}
      *
      * @param id resource identifier
-     * @return resource if found, or 404 if not
+    * @return resource if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
     @GetMapping("/{id}")
     public ResponseEntity<Resource> getResourceById(@PathVariable Long id) {
-        return resourceService
+        Resource resource = resourceService
                 .getResourceById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+            .orElseThrow(() -> new ResourceNotFoundException("Resource", "id", id));
+        return ResponseEntity.ok(resource);
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Warehouse;
+import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.WarehouseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,16 +49,16 @@ public class WarehouseController {
      * GET /api/warehouses/{id}
      *
      * @param id warehouse identifier
-     * @return warehouse if found, or 404 if not
+    * @return warehouse if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
     @GetMapping("/{id}")
     public ResponseEntity<Warehouse> getWarehouseById(@PathVariable Long id) {
-        return warehouseService
+        Warehouse warehouse = warehouseService
                 .getWarehouseById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("Warehouse", "id", id));
+        return ResponseEntity.ok(warehouse);
     }
-
+    
     /**
      * Creates a new warehouse.
      *

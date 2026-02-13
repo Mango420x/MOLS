@@ -1,6 +1,7 @@
 package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.OrderItem;
+import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.OrderItemService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,14 +49,14 @@ public class OrderItemController {
      * GET /api/order-items/{id}
      *
      * @param id order item identifier
-     * @return order item if found, or 404 if not
+    * @return order item if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
     @GetMapping("/{id}")
     public ResponseEntity<OrderItem> getOrderItemById(@PathVariable Long id) {
-        return orderItemService
+        OrderItem orderItem = orderItemService
                 .getOrderItemById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+            .orElseThrow(() -> new ResourceNotFoundException("OrderItem", "id", id));
+        return ResponseEntity.ok(orderItem);
     }
 
     /**
