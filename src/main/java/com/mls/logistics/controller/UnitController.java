@@ -5,6 +5,7 @@ import com.mls.logistics.dto.request.CreateUnitRequest;
 import com.mls.logistics.dto.response.UnitResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.UnitService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -75,7 +76,7 @@ public class UnitController {
      * @return created unit with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<UnitResponse> createUnit(@RequestBody CreateUnitRequest request) {
+    public ResponseEntity<UnitResponse> createUnit(@Valid @RequestBody CreateUnitRequest request) {
         Unit createdUnit = unitService.createUnit(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(UnitResponse.from(createdUnit));
     }

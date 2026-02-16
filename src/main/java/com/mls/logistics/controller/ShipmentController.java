@@ -5,6 +5,7 @@ import com.mls.logistics.dto.request.CreateShipmentRequest;
 import com.mls.logistics.dto.response.ShipmentResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.ShipmentService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -75,7 +76,7 @@ public class ShipmentController {
      * @return created shipment with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<ShipmentResponse> createShipment(@RequestBody CreateShipmentRequest request) {
+    public ResponseEntity<ShipmentResponse> createShipment(@Valid @RequestBody CreateShipmentRequest request) {
         Shipment createdShipment = shipmentService.createShipment(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ShipmentResponse.from(createdShipment));
     }

@@ -1,5 +1,9 @@
 package com.mls.logistics.dto.request;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+
 /**
  * Data Transfer Object for creating a new Stock.
  * 
@@ -9,8 +13,15 @@ package com.mls.logistics.dto.request;
  */
 public class CreateStockRequest {
 
+    @NotNull(message = "Resource ID is required")
+    @Positive(message = "Resource ID must be a positive number")
     private Long resourceId;
+
+    @NotNull(message = "Warehouse ID is required")
+    @Positive(message = "Warehouse ID must be a positive number")
     private Long warehouseId;
+
+    @PositiveOrZero(message = "Stock quantity must be zero or greater")
     private int quantity;
 
     /**

@@ -5,6 +5,7 @@ import com.mls.logistics.dto.request.CreateVehicleRequest;
 import com.mls.logistics.dto.response.VehicleResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.VehicleService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -75,7 +76,7 @@ public class VehicleController {
      * @return created vehicle with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<VehicleResponse> createVehicle(@RequestBody CreateVehicleRequest request) {
+    public ResponseEntity<VehicleResponse> createVehicle(@Valid @RequestBody CreateVehicleRequest request) {
         Vehicle createdVehicle = vehicleService.createVehicle(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(VehicleResponse.from(createdVehicle));
     }

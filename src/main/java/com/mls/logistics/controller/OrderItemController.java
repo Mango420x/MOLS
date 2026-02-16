@@ -5,6 +5,7 @@ import com.mls.logistics.dto.request.CreateOrderItemRequest;
 import com.mls.logistics.dto.response.OrderItemResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.OrderItemService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -75,7 +76,7 @@ public class OrderItemController {
      * @return created order item with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<OrderItemResponse> createOrderItem(@RequestBody CreateOrderItemRequest request) {
+    public ResponseEntity<OrderItemResponse> createOrderItem(@Valid @RequestBody CreateOrderItemRequest request) {
         OrderItem createdOrderItem = orderItemService.createOrderItem(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(OrderItemResponse.from(createdOrderItem));
     }

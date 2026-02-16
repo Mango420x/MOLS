@@ -1,5 +1,8 @@
 package com.mls.logistics.dto.request;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 /**
  * Data Transfer Object for creating a new OrderItem.
  * 
@@ -9,8 +12,15 @@ package com.mls.logistics.dto.request;
  */
 public class CreateOrderItemRequest {
 
+    @NotNull(message = "Order ID is required")
+    @Positive(message = "Order ID must be a positive number")
     private Long orderId;
+
+    @NotNull(message = "Resource ID is required")
+    @Positive(message = "Resource ID must be a positive number")
     private Long resourceId;
+
+    @Positive(message = "Order item quantity must be greater than 0")
     private int quantity;
 
     /**

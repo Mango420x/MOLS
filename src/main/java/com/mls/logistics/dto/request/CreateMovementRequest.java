@@ -2,6 +2,11 @@ package com.mls.logistics.dto.request;
 
 import java.time.LocalDateTime;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+
 /**
  * Data Transfer Object for creating a new Movement.
  * 
@@ -11,9 +16,17 @@ import java.time.LocalDateTime;
  */
 public class CreateMovementRequest {
 
+    @NotNull(message = "Stock ID is required")
     private Long stockId;
+
+    @NotBlank(message = "Movement type is required")
+    @Size(min = 2, max = 50, message = "Movement type must be between 2 and 50 characters")
     private String type;
+
+    @Positive(message = "Movement quantity must be greater than 0")
     private int quantity;
+
+    @NotNull(message = "Movement date and time are required")
     private LocalDateTime dateTime;
 
     /**

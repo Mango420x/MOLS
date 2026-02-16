@@ -5,6 +5,7 @@ import com.mls.logistics.dto.request.CreateResourceRequest;
 import com.mls.logistics.dto.response.ResourceResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.ResourceService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -75,7 +76,7 @@ public class ResourceController {
      * @return created resource with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<ResourceResponse> createResource(@RequestBody CreateResourceRequest request) {
+    public ResponseEntity<ResourceResponse> createResource(@Valid @RequestBody CreateResourceRequest request) {
         Resource createdResource = resourceService.createResource(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ResourceResponse.from(createdResource));
     }

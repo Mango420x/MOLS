@@ -1,5 +1,9 @@
 package com.mls.logistics.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+
 /**
  * Data Transfer Object for creating a new Vehicle.
  * 
@@ -9,8 +13,15 @@ package com.mls.logistics.dto.request;
  */
 public class CreateVehicleRequest {
 
+    @NotBlank(message = "Vehicle type is required")
+    @Size(min = 2, max = 50, message = "Vehicle type must be between 2 and 50 characters")
     private String type;
+
+    @Positive(message = "Vehicle capacity must be greater than 0")
     private int capacity;
+
+    @NotBlank(message = "Vehicle status is required")
+    @Size(min = 2, max = 50, message = "Vehicle status must be between 2 and 50 characters")
     private String status;
 
     /**

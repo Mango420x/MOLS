@@ -5,6 +5,7 @@ import com.mls.logistics.dto.request.CreateStockRequest;
 import com.mls.logistics.dto.response.StockResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.StockService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -75,7 +76,7 @@ public class StockController {
      * @return created stock with HTTP 201 status
      */
     @PostMapping
-    public ResponseEntity<StockResponse> createStock(@RequestBody CreateStockRequest request) {
+    public ResponseEntity<StockResponse> createStock(@Valid @RequestBody CreateStockRequest request) {
         Stock createdStock = stockService.createStock(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(StockResponse.from(createdStock));
     }

@@ -1,5 +1,8 @@
 package com.mls.logistics.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 /**
  * Data Transfer Object for creating a new Resource.
  * 
@@ -9,8 +12,16 @@ package com.mls.logistics.dto.request;
  */
 public class CreateResourceRequest {
 
+    @NotBlank(message = "Resource name is required")
+    @Size(min = 2, max = 100, message = "Resource name must be between 2 and 100 characters")
     private String name;
+    
+    @NotBlank(message = "Resource type is required")
+    @Size(min = 2, max = 50, message = "Resource type must be between 2 and 50 characters")
     private String type;
+    
+    @NotBlank(message = "Resource criticality is required")
+    @Size(min = 2, max = 50, message = "Resource criticality must be between 2 and 50 characters")
     private String criticality;
 
     /**

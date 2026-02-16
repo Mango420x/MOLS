@@ -1,5 +1,10 @@
 package com.mls.logistics.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+
 /**
  * Data Transfer Object for creating a new Shipment.
  * 
@@ -9,9 +14,20 @@ package com.mls.logistics.dto.request;
  */
 public class CreateShipmentRequest {
 
+    @NotNull(message = "Order ID is required")
+    @Positive(message = "Order ID must be a positive number")
     private Long orderId;
+
+    @NotNull(message = "Vehicle ID is required")
+    @Positive(message = "Vehicle ID must be a positive number")
     private Long vehicleId;
+
+    @NotNull(message = "Warehouse ID is required")
+    @Positive(message = "Warehouse ID must be a positive number")
     private Long warehouseId;
+
+    @NotBlank(message = "Shipment status is required")
+    @Size(min = 2, max = 50, message = "Shipment status must be between 2 and 50 characters")
     private String status;
 
     /**
