@@ -3,6 +3,8 @@ package com.mls.logistics.service;
 import com.mls.logistics.domain.Movement;
 import com.mls.logistics.domain.Stock;
 import com.mls.logistics.dto.request.CreateMovementRequest;
+import com.mls.logistics.dto.request.UpdateMovementRequest;
+import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.MovementRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,5 +78,53 @@ public class MovementService {
         movement.setDateTime(request.getDateTime());
 
         return movementRepository.save(movement);
+    }
+
+    /**
+     * Updates an existing movement.
+     * 
+     * Only non-null fields from the request are updated.
+     *
+     * @param id movement identifier
+     * @param request update data
+     * @return updated movement
+     * @throws ResourceNotFoundException if movement doesn't exist
+     */
+    @Transactional
+    public Movement updateMovement(Long id, UpdateMovementRequest request) {
+        Movement movement = movementRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Movement", "id", id));
+
+        if (request.getStockId() != null) {
+            Stock stock = new Stock();
+            stock.setId(request.getStockId());
+            movement.setStock(stock);
+        }
+        if (request.getType() != null) {
+            movement.setType(request.getType());
+        }
+        if (request.getQuantity() != null) {
+            movement.setQuantity(request.getQuantity());
+        }
+        if (request.getDateTime() != null) {
+            movement.setDateTime(request.getDateTime());
+        }
+
+        return movementRepository.save(movement);
+    }
+
+    /**
+     * Deletes a movement by ID.
+     *
+     * @param id movement identifier
+     * @throws ResourceNotFoundException if movement doesn't exist
+     */
+    @Transactional
+    public void deleteMovement(Long id) {
+        if (!movementRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Movement", "id", id);
+        }
+        movementRepository.deleteById(id);
     }
 }

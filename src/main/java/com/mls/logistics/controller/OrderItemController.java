@@ -2,6 +2,7 @@ package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.OrderItem;
 import com.mls.logistics.dto.request.CreateOrderItemRequest;
+import com.mls.logistics.dto.request.UpdateOrderItemRequest;
 import com.mls.logistics.dto.response.OrderItemResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.OrderItemService;
@@ -79,5 +80,36 @@ public class OrderItemController {
     public ResponseEntity<OrderItemResponse> createOrderItem(@Valid @RequestBody CreateOrderItemRequest request) {
         OrderItem createdOrderItem = orderItemService.createOrderItem(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(OrderItemResponse.from(createdOrderItem));
+    }
+
+    /**
+     * Updates an existing order item.
+     *
+     * PUT /api/order-items/{id}
+     *
+     * @param id order item identifier
+     * @param request update data
+     * @return updated order item with HTTP 200 status
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<OrderItemResponse> updateOrderItem(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateOrderItemRequest request) {
+        OrderItem updatedOrderItem = orderItemService.updateOrderItem(id, request);
+        return ResponseEntity.ok(OrderItemResponse.from(updatedOrderItem));
+    }
+
+    /**
+     * Deletes an order item.
+     *
+     * DELETE /api/order-items/{id}
+     *
+     * @param id order item identifier
+     * @return 204 No Content on success
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteOrderItem(@PathVariable Long id) {
+        orderItemService.deleteOrderItem(id);
+        return ResponseEntity.noContent().build();
     }
 }

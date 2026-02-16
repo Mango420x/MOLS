@@ -2,6 +2,7 @@ package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Movement;
 import com.mls.logistics.dto.request.CreateMovementRequest;
+import com.mls.logistics.dto.request.UpdateMovementRequest;
 import com.mls.logistics.dto.response.MovementResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.MovementService;
@@ -79,5 +80,36 @@ public class MovementController {
     public ResponseEntity<MovementResponse> createMovement(@Valid @RequestBody CreateMovementRequest request) {
         Movement createdMovement = movementService.createMovement(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(MovementResponse.from(createdMovement));
+    }
+
+    /**
+     * Updates an existing movement record.
+     *
+     * PUT /api/movements/{id}
+     *
+     * @param id movement identifier
+     * @param request update data
+     * @return updated movement with HTTP 200 status
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<MovementResponse> updateMovement(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateMovementRequest request) {
+        Movement updatedMovement = movementService.updateMovement(id, request);
+        return ResponseEntity.ok(MovementResponse.from(updatedMovement));
+    }
+
+    /**
+     * Deletes a movement record.
+     *
+     * DELETE /api/movements/{id}
+     *
+     * @param id movement identifier
+     * @return 204 No Content on success
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMovement(@PathVariable Long id) {
+        movementService.deleteMovement(id);
+        return ResponseEntity.noContent().build();
     }
 }

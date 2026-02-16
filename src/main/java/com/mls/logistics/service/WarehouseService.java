@@ -1,6 +1,8 @@
 package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Warehouse;
+import com.mls.logistics.dto.request.UpdateWarehouseRequest;
+import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.WarehouseRepository;
 import org.springframework.stereotype.Service;
 import com.mls.logistics.dto.request.CreateWarehouseRequest;
@@ -68,5 +70,45 @@ public class WarehouseService {
         warehouse.setName(request.getName());
         warehouse.setLocation(request.getLocation());
         return warehouseRepository.save(warehouse);
+    }
+
+    /**
+     * Updates an existing warehouse.
+     * 
+     * Only non-null fields from the request are updated.
+     *
+     * @param id warehouse identifier
+     * @param request update data
+     * @return updated warehouse
+     * @throws ResourceNotFoundException if warehouse doesn't exist
+     */
+    @Transactional
+    public Warehouse updateWarehouse(Long id, UpdateWarehouseRequest request) {
+        Warehouse warehouse = warehouseRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Warehouse", "id", id));
+
+        if (request.getName() != null) {
+            warehouse.setName(request.getName());
+        }
+        if (request.getLocation() != null) {
+            warehouse.setLocation(request.getLocation());
+        }
+
+        return warehouseRepository.save(warehouse);
+    }
+
+    /**
+     * Deletes a warehouse by ID.
+     *
+     * @param id warehouse identifier
+     * @throws ResourceNotFoundException if warehouse doesn't exist
+     */
+    @Transactional
+    public void deleteWarehouse(Long id) {
+        if (!warehouseRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Warehouse", "id", id);
+        }
+        warehouseRepository.deleteById(id);
     }
 }

@@ -3,6 +3,8 @@ package com.mls.logistics.service;
 import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateOrderRequest;
+import com.mls.logistics.dto.request.UpdateOrderRequest;
+import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,5 +77,50 @@ public class OrderService {
         order.setStatus(request.getStatus());
 
         return orderRepository.save(order);
+    }
+
+    /**
+     * Updates an existing order.
+     * 
+     * Only non-null fields from the request are updated.
+     *
+     * @param id order identifier
+     * @param request update data
+     * @return updated order
+     * @throws ResourceNotFoundException if order doesn't exist
+     */
+    @Transactional
+    public Order updateOrder(Long id, UpdateOrderRequest request) {
+        Order order = orderRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", id));
+
+        if (request.getUnitId() != null) {
+            Unit unit = new Unit();
+            unit.setId(request.getUnitId());
+            order.setUnit(unit);
+        }
+        if (request.getDateCreated() != null) {
+            order.setDateCreated(request.getDateCreated());
+        }
+        if (request.getStatus() != null) {
+            order.setStatus(request.getStatus());
+        }
+
+        return orderRepository.save(order);
+    }
+
+    /**
+     * Deletes an order by ID.
+     *
+     * @param id order identifier
+     * @throws ResourceNotFoundException if order doesn't exist
+     */
+    @Transactional
+    public void deleteOrder(Long id) {
+        if (!orderRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Order", "id", id);
+        }
+        orderRepository.deleteById(id);
     }
 }

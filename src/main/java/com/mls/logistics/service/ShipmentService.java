@@ -5,6 +5,8 @@ import com.mls.logistics.domain.Shipment;
 import com.mls.logistics.domain.Vehicle;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateShipmentRequest;
+import com.mls.logistics.dto.request.UpdateShipmentRequest;
+import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.ShipmentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,5 +86,57 @@ public class ShipmentService {
         shipment.setStatus(request.getStatus());
 
         return shipmentRepository.save(shipment);
+    }
+
+    /**
+     * Updates an existing shipment.
+     * 
+     * Only non-null fields from the request are updated.
+     *
+     * @param id shipment identifier
+     * @param request update data
+     * @return updated shipment
+     * @throws ResourceNotFoundException if shipment doesn't exist
+     */
+    @Transactional
+    public Shipment updateShipment(Long id, UpdateShipmentRequest request) {
+        Shipment shipment = shipmentRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Shipment", "id", id));
+
+        if (request.getOrderId() != null) {
+            Order order = new Order();
+            order.setId(request.getOrderId());
+            shipment.setOrder(order);
+        }
+        if (request.getVehicleId() != null) {
+            Vehicle vehicle = new Vehicle();
+            vehicle.setId(request.getVehicleId());
+            shipment.setVehicle(vehicle);
+        }
+        if (request.getWarehouseId() != null) {
+            Warehouse warehouse = new Warehouse();
+            warehouse.setId(request.getWarehouseId());
+            shipment.setWarehouse(warehouse);
+        }
+        if (request.getStatus() != null) {
+            shipment.setStatus(request.getStatus());
+        }
+
+        return shipmentRepository.save(shipment);
+    }
+
+    /**
+     * Deletes a shipment by ID.
+     *
+     * @param id shipment identifier
+     * @throws ResourceNotFoundException if shipment doesn't exist
+     */
+    @Transactional
+    public void deleteShipment(Long id) {
+        if (!shipmentRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Shipment", "id", id);
+        }
+        shipmentRepository.deleteById(id);
     }
 }

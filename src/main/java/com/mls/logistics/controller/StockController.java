@@ -2,6 +2,7 @@ package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Stock;
 import com.mls.logistics.dto.request.CreateStockRequest;
+import com.mls.logistics.dto.request.UpdateStockRequest;
 import com.mls.logistics.dto.response.StockResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.StockService;
@@ -79,5 +80,36 @@ public class StockController {
     public ResponseEntity<StockResponse> createStock(@Valid @RequestBody CreateStockRequest request) {
         Stock createdStock = stockService.createStock(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(StockResponse.from(createdStock));
+    }
+
+    /**
+     * Updates an existing stock record.
+     *
+     * PUT /api/stocks/{id}
+     *
+     * @param id stock identifier
+     * @param request update data
+     * @return updated stock with HTTP 200 status
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<StockResponse> updateStock(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateStockRequest request) {
+        Stock updatedStock = stockService.updateStock(id, request);
+        return ResponseEntity.ok(StockResponse.from(updatedStock));
+    }
+
+    /**
+     * Deletes a stock record.
+     *
+     * DELETE /api/stocks/{id}
+     *
+     * @param id stock identifier
+     * @return 204 No Content on success
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteStock(@PathVariable Long id) {
+        stockService.deleteStock(id);
+        return ResponseEntity.noContent().build();
     }
 }

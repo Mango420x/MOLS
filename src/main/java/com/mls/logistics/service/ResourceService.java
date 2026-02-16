@@ -2,6 +2,8 @@ package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Resource;
 import com.mls.logistics.dto.request.CreateResourceRequest;
+import com.mls.logistics.dto.request.UpdateResourceRequest;
+import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.ResourceRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,5 +71,48 @@ public class ResourceService {
         resource.setType(request.getType());
         resource.setCriticality(request.getCriticality());
         return resourceRepository.save(resource);
+    }
+
+    /**
+     * Updates an existing resource.
+     * 
+     * Only non-null fields from the request are updated.
+     *
+     * @param id resource identifier
+     * @param request update data
+     * @return updated resource
+     * @throws ResourceNotFoundException if resource doesn't exist
+     */
+    @Transactional
+    public Resource updateResource(Long id, UpdateResourceRequest request) {
+        Resource resource = resourceRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Resource", "id", id));
+
+        if (request.getName() != null) {
+            resource.setName(request.getName());
+        }
+        if (request.getType() != null) {
+            resource.setType(request.getType());
+        }
+        if (request.getCriticality() != null) {
+            resource.setCriticality(request.getCriticality());
+        }
+
+        return resourceRepository.save(resource);
+    }
+
+    /**
+     * Deletes a resource by ID.
+     *
+     * @param id resource identifier
+     * @throws ResourceNotFoundException if resource doesn't exist
+     */
+    @Transactional
+    public void deleteResource(Long id) {
+        if (!resourceRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Resource", "id", id);
+        }
+        resourceRepository.deleteById(id);
     }
 }

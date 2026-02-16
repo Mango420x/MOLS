@@ -4,6 +4,8 @@ import com.mls.logistics.domain.Resource;
 import com.mls.logistics.domain.Stock;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateStockRequest;
+import com.mls.logistics.dto.request.UpdateStockRequest;
+import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.StockRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,5 +81,52 @@ public class StockService {
         stock.setQuantity(request.getQuantity());
 
         return stockRepository.save(stock);
+    }
+
+    /**
+     * Updates an existing stock.
+     * 
+     * Only non-null fields from the request are updated.
+     *
+     * @param id stock identifier
+     * @param request update data
+     * @return updated stock
+     * @throws ResourceNotFoundException if stock doesn't exist
+     */
+    @Transactional
+    public Stock updateStock(Long id, UpdateStockRequest request) {
+        Stock stock = stockRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Stock", "id", id));
+
+        if (request.getResourceId() != null) {
+            Resource resource = new Resource();
+            resource.setId(request.getResourceId());
+            stock.setResource(resource);
+        }
+        if (request.getWarehouseId() != null) {
+            Warehouse warehouse = new Warehouse();
+            warehouse.setId(request.getWarehouseId());
+            stock.setWarehouse(warehouse);
+        }
+        if (request.getQuantity() != null) {
+            stock.setQuantity(request.getQuantity());
+        }
+
+        return stockRepository.save(stock);
+    }
+
+    /**
+     * Deletes a stock by ID.
+     *
+     * @param id stock identifier
+     * @throws ResourceNotFoundException if stock doesn't exist
+     */
+    @Transactional
+    public void deleteStock(Long id) {
+        if (!stockRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Stock", "id", id);
+        }
+        stockRepository.deleteById(id);
     }
 }

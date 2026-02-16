@@ -2,6 +2,7 @@ package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateUnitRequest;
+import com.mls.logistics.dto.request.UpdateUnitRequest;
 import com.mls.logistics.dto.response.UnitResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.UnitService;
@@ -79,5 +80,36 @@ public class UnitController {
     public ResponseEntity<UnitResponse> createUnit(@Valid @RequestBody CreateUnitRequest request) {
         Unit createdUnit = unitService.createUnit(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(UnitResponse.from(createdUnit));
+    }
+
+    /**
+     * Updates an existing unit.
+     *
+     * PUT /api/units/{id}
+     *
+     * @param id unit identifier
+     * @param request update data
+     * @return updated unit with HTTP 200 status
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<UnitResponse> updateUnit(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateUnitRequest request) {
+        Unit updatedUnit = unitService.updateUnit(id, request);
+        return ResponseEntity.ok(UnitResponse.from(updatedUnit));
+    }
+
+    /**
+     * Deletes a unit.
+     *
+     * DELETE /api/units/{id}
+     *
+     * @param id unit identifier
+     * @return 204 No Content on success
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUnit(@PathVariable Long id) {
+        unitService.deleteUnit(id);
+        return ResponseEntity.noContent().build();
     }
 }

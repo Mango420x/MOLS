@@ -2,6 +2,7 @@ package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Vehicle;
 import com.mls.logistics.dto.request.CreateVehicleRequest;
+import com.mls.logistics.dto.request.UpdateVehicleRequest;
 import com.mls.logistics.dto.response.VehicleResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.VehicleService;
@@ -79,5 +80,36 @@ public class VehicleController {
     public ResponseEntity<VehicleResponse> createVehicle(@Valid @RequestBody CreateVehicleRequest request) {
         Vehicle createdVehicle = vehicleService.createVehicle(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(VehicleResponse.from(createdVehicle));
+    }
+
+    /**
+     * Updates an existing vehicle.
+     *
+     * PUT /api/vehicles/{id}
+     *
+     * @param id vehicle identifier
+     * @param request update data
+     * @return updated vehicle with HTTP 200 status
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<VehicleResponse> updateVehicle(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateVehicleRequest request) {
+        Vehicle updatedVehicle = vehicleService.updateVehicle(id, request);
+        return ResponseEntity.ok(VehicleResponse.from(updatedVehicle));
+    }
+
+    /**
+     * Deletes a vehicle.
+     *
+     * DELETE /api/vehicles/{id}
+     *
+     * @param id vehicle identifier
+     * @return 204 No Content on success
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteVehicle(@PathVariable Long id) {
+        vehicleService.deleteVehicle(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -4,6 +4,8 @@ import com.mls.logistics.domain.OrderItem;
 import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.Resource;
 import com.mls.logistics.dto.request.CreateOrderItemRequest;
+import com.mls.logistics.dto.request.UpdateOrderItemRequest;
+import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderItemRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,5 +81,52 @@ public class OrderItemService {
         orderItem.setQuantity(request.getQuantity());
 
         return orderItemRepository.save(orderItem);
+    }
+
+    /**
+     * Updates an existing order item.
+     * 
+     * Only non-null fields from the request are updated.
+     *
+     * @param id order item identifier
+     * @param request update data
+     * @return updated order item
+     * @throws ResourceNotFoundException if order item doesn't exist
+     */
+    @Transactional
+    public OrderItem updateOrderItem(Long id, UpdateOrderItemRequest request) {
+        OrderItem orderItem = orderItemRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("OrderItem", "id", id));
+
+        if (request.getOrderId() != null) {
+            Order order = new Order();
+            order.setId(request.getOrderId());
+            orderItem.setOrder(order);
+        }
+        if (request.getResourceId() != null) {
+            Resource resource = new Resource();
+            resource.setId(request.getResourceId());
+            orderItem.setResource(resource);
+        }
+        if (request.getQuantity() != null) {
+            orderItem.setQuantity(request.getQuantity());
+        }
+
+        return orderItemRepository.save(orderItem);
+    }
+
+    /**
+     * Deletes an order item by ID.
+     *
+     * @param id order item identifier
+     * @throws ResourceNotFoundException if order item doesn't exist
+     */
+    @Transactional
+    public void deleteOrderItem(Long id) {
+        if (!orderItemRepository.existsById(id)) {
+            throw new ResourceNotFoundException("OrderItem", "id", id);
+        }
+        orderItemRepository.deleteById(id);
     }
 }

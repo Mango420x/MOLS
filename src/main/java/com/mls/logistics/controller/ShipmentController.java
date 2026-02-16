@@ -2,6 +2,7 @@ package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Shipment;
 import com.mls.logistics.dto.request.CreateShipmentRequest;
+import com.mls.logistics.dto.request.UpdateShipmentRequest;
 import com.mls.logistics.dto.response.ShipmentResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.ShipmentService;
@@ -79,5 +80,36 @@ public class ShipmentController {
     public ResponseEntity<ShipmentResponse> createShipment(@Valid @RequestBody CreateShipmentRequest request) {
         Shipment createdShipment = shipmentService.createShipment(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ShipmentResponse.from(createdShipment));
+    }
+
+    /**
+     * Updates an existing shipment.
+     *
+     * PUT /api/shipments/{id}
+     *
+     * @param id shipment identifier
+     * @param request update data
+     * @return updated shipment with HTTP 200 status
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ShipmentResponse> updateShipment(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateShipmentRequest request) {
+        Shipment updatedShipment = shipmentService.updateShipment(id, request);
+        return ResponseEntity.ok(ShipmentResponse.from(updatedShipment));
+    }
+
+    /**
+     * Deletes a shipment.
+     *
+     * DELETE /api/shipments/{id}
+     *
+     * @param id shipment identifier
+     * @return 204 No Content on success
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteShipment(@PathVariable Long id) {
+        shipmentService.deleteShipment(id);
+        return ResponseEntity.noContent().build();
     }
 }

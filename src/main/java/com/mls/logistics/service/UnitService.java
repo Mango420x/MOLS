@@ -2,6 +2,8 @@ package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateUnitRequest;
+import com.mls.logistics.dto.request.UpdateUnitRequest;
+import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.UnitRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,5 +70,45 @@ public class UnitService {
         unit.setName(request.getName());
         unit.setLocation(request.getLocation());
         return unitRepository.save(unit);
+    }
+
+    /**
+     * Updates an existing unit.
+     * 
+     * Only non-null fields from the request are updated.
+     *
+     * @param id unit identifier
+     * @param request update data
+     * @return updated unit
+     * @throws ResourceNotFoundException if unit doesn't exist
+     */
+    @Transactional
+    public Unit updateUnit(Long id, UpdateUnitRequest request) {
+        Unit unit = unitRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Unit", "id", id));
+
+        if (request.getName() != null) {
+            unit.setName(request.getName());
+        }
+        if (request.getLocation() != null) {
+            unit.setLocation(request.getLocation());
+        }
+
+        return unitRepository.save(unit);
+    }
+
+    /**
+     * Deletes a unit by ID.
+     *
+     * @param id unit identifier
+     * @throws ResourceNotFoundException if unit doesn't exist
+     */
+    @Transactional
+    public void deleteUnit(Long id) {
+        if (!unitRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Unit", "id", id);
+        }
+        unitRepository.deleteById(id);
     }
 }

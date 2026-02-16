@@ -2,6 +2,7 @@ package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Order;
 import com.mls.logistics.dto.request.CreateOrderRequest;
+import com.mls.logistics.dto.request.UpdateOrderRequest;
 import com.mls.logistics.dto.response.OrderResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.OrderService;
@@ -79,5 +80,36 @@ public class OrderController {
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         Order createdOrder = orderService.createOrder(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(OrderResponse.from(createdOrder));
+    }
+
+    /**
+     * Updates an existing order.
+     *
+     * PUT /api/orders/{id}
+     *
+     * @param id order identifier
+     * @param request update data
+     * @return updated order with HTTP 200 status
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<OrderResponse> updateOrder(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateOrderRequest request) {
+        Order updatedOrder = orderService.updateOrder(id, request);
+        return ResponseEntity.ok(OrderResponse.from(updatedOrder));
+    }
+
+    /**
+     * Deletes an order.
+     *
+     * DELETE /api/orders/{id}
+     *
+     * @param id order identifier
+     * @return 204 No Content on success
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
+        orderService.deleteOrder(id);
+        return ResponseEntity.noContent().build();
     }
 }

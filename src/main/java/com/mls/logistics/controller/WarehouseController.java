@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.mls.logistics.dto.request.CreateWarehouseRequest;
 import com.mls.logistics.dto.response.WarehouseResponse;
+import com.mls.logistics.dto.request.UpdateWarehouseRequest;
 import java.util.stream.Collectors;
 import jakarta.validation.Valid;
 
@@ -81,5 +82,36 @@ public class WarehouseController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(WarehouseResponse.from(createdWarehouse));
+    }
+
+    /**
+     * Updates an existing warehouse.
+     *
+     * PUT /api/warehouses/{id}
+     *
+     * @param id warehouse identifier
+     * @param request update data
+     * @return updated warehouse
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<WarehouseResponse> updateWarehouse(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateWarehouseRequest request) {
+        Warehouse updatedWarehouse = warehouseService.updateWarehouse(id, request);
+        return ResponseEntity.ok(WarehouseResponse.from(updatedWarehouse));
+    }
+
+    /**
+     * Deletes a warehouse.
+     *
+     * DELETE /api/warehouses/{id}
+     *
+     * @param id warehouse identifier
+     * @return 204 No Content on success
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteWarehouse(@PathVariable Long id) {
+        warehouseService.deleteWarehouse(id);
+        return ResponseEntity.noContent().build();
     }
 }
