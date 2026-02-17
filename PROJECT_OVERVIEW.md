@@ -264,10 +264,9 @@ src/main/java/com/mls/logistics/
 - [x] Dockerization (multi-stage image build + compose stack)
 
 ### 🚧 Planned (In Order)
-1. Enforce remaining domain rules (vehicle compatibility and order completion lifecycle)
-2. Security (authentication/authorization)
-3. Deeper integration testing (e.g., Testcontainers)
-4. CI/CD pipeline
+1. Security (authentication/authorization)
+2. Deeper integration testing (e.g., Testcontainers)
+3. CI/CD pipeline
 
 ## API Endpoints Reference
 
