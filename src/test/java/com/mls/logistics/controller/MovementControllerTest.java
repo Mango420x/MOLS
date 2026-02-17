@@ -5,6 +5,8 @@ import com.mls.logistics.domain.Movement;
 import com.mls.logistics.domain.Stock;
 import com.mls.logistics.dto.request.CreateMovementRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.security.service.AppUserService;
+import com.mls.logistics.security.service.JwtService;
 import com.mls.logistics.service.MovementService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.security.test.context.support.WithMockUser;
 
 /**
  * Integration tests for MovementController.
@@ -41,6 +44,12 @@ class MovementControllerTest {
     @MockitoBean
     private MovementService movementService;
 
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private AppUserService appUserService;
+
     private Movement testMovement;
 
     @BeforeEach
@@ -57,6 +66,7 @@ class MovementControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getAllMovements_ShouldReturnMovementsList() throws Exception {
         // Given
         when(movementService.getAllMovements()).thenReturn(Arrays.asList(testMovement));
@@ -72,6 +82,7 @@ class MovementControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getMovementById_WhenExists_ShouldReturnMovement() throws Exception {
         // Given
         when(movementService.getMovementById(1L)).thenReturn(Optional.of(testMovement));
@@ -86,6 +97,7 @@ class MovementControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getMovementById_WhenNotExists_ShouldReturn404() throws Exception {
         // Given
         when(movementService.getMovementById(999L)).thenReturn(Optional.empty());
@@ -98,6 +110,7 @@ class MovementControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createMovement_WithValidRequest_ShouldReturn201() throws Exception {
         // Given
         CreateMovementRequest request = new CreateMovementRequest(1L, "IN", 5, LocalDateTime.now());
@@ -114,6 +127,7 @@ class MovementControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createMovement_WithInvalidRequest_ShouldReturn400() throws Exception {
         // Given
         CreateMovementRequest request = new CreateMovementRequest(null, "", 0, null);
@@ -128,6 +142,7 @@ class MovementControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteMovement_WhenExists_ShouldReturn204() throws Exception {
         // Given
         doNothing().when(movementService).deleteMovement(1L);
@@ -140,6 +155,7 @@ class MovementControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteMovement_WhenNotExists_ShouldReturn404() throws Exception {
         // Given
         doThrow(new ResourceNotFoundException("Movement", "id", 999L))

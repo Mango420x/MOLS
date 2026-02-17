@@ -7,6 +7,8 @@ import com.mls.logistics.domain.Vehicle;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateShipmentRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.security.service.AppUserService;
+import com.mls.logistics.security.service.JwtService;
 import com.mls.logistics.service.ShipmentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.security.test.context.support.WithMockUser;
 
 /**
  * Integration tests for ShipmentController.
@@ -41,6 +44,12 @@ class ShipmentControllerTest {
 
     @MockitoBean
     private ShipmentService shipmentService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private AppUserService appUserService;
 
     private Shipment testShipment;
 
@@ -64,6 +73,7 @@ class ShipmentControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getAllShipments_ShouldReturnShipmentsList() throws Exception {
         // Given
         when(shipmentService.getAllShipments()).thenReturn(Arrays.asList(testShipment));
@@ -78,6 +88,7 @@ class ShipmentControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getShipmentById_WhenExists_ShouldReturnShipment() throws Exception {
         // Given
         when(shipmentService.getShipmentById(1L)).thenReturn(Optional.of(testShipment));
@@ -91,6 +102,7 @@ class ShipmentControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getShipmentById_WhenNotExists_ShouldReturn404() throws Exception {
         // Given
         when(shipmentService.getShipmentById(999L)).thenReturn(Optional.empty());
@@ -103,6 +115,7 @@ class ShipmentControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createShipment_WithValidRequest_ShouldReturn201() throws Exception {
         // Given
         CreateShipmentRequest request = new CreateShipmentRequest(1L, 1L, 1L, "PLANNED");
@@ -119,6 +132,7 @@ class ShipmentControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createShipment_WithInvalidRequest_ShouldReturn400() throws Exception {
         // Given
         CreateShipmentRequest request = new CreateShipmentRequest(null, null, null, "");
@@ -133,6 +147,7 @@ class ShipmentControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteShipment_WhenExists_ShouldReturn204() throws Exception {
         // Given
         doNothing().when(shipmentService).deleteShipment(1L);
@@ -145,6 +160,7 @@ class ShipmentControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteShipment_WhenNotExists_ShouldReturn404() throws Exception {
         // Given
         doThrow(new ResourceNotFoundException("Shipment", "id", 999L))

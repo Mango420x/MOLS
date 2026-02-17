@@ -5,6 +5,8 @@ import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateOrderRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.security.service.AppUserService;
+import com.mls.logistics.security.service.JwtService;
 import com.mls.logistics.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.security.test.context.support.WithMockUser;
 
 /**
  * Integration tests for OrderController.
@@ -41,6 +44,12 @@ class OrderControllerTest {
     @MockitoBean
     private OrderService orderService;
 
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private AppUserService appUserService;
+
     private Order testOrder;
 
     @BeforeEach
@@ -56,6 +65,7 @@ class OrderControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getAllOrders_ShouldReturnOrdersList() throws Exception {
         // Given
         when(orderService.getAllOrders()).thenReturn(Arrays.asList(testOrder));
@@ -70,6 +80,7 @@ class OrderControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getOrderById_WhenExists_ShouldReturnOrder() throws Exception {
         // Given
         when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
@@ -83,6 +94,7 @@ class OrderControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getOrderById_WhenNotExists_ShouldReturn404() throws Exception {
         // Given
         when(orderService.getOrderById(999L)).thenReturn(Optional.empty());
@@ -95,6 +107,7 @@ class OrderControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createOrder_WithValidRequest_ShouldReturn201() throws Exception {
         // Given
         CreateOrderRequest request = new CreateOrderRequest(1L, LocalDate.now(), "CREATED");
@@ -111,6 +124,7 @@ class OrderControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createOrder_WithInvalidRequest_ShouldReturn400() throws Exception {
         // Given
         CreateOrderRequest request = new CreateOrderRequest(null, null, "");
@@ -125,6 +139,7 @@ class OrderControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteOrder_WhenExists_ShouldReturn204() throws Exception {
         // Given
         doNothing().when(orderService).deleteOrder(1L);
@@ -137,6 +152,7 @@ class OrderControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteOrder_WhenNotExists_ShouldReturn404() throws Exception {
         // Given
         doThrow(new ResourceNotFoundException("Order", "id", 999L))

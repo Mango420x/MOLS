@@ -6,6 +6,8 @@ import com.mls.logistics.domain.Stock;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateStockRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.security.service.AppUserService;
+import com.mls.logistics.security.service.JwtService;
 import com.mls.logistics.service.StockService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.security.test.context.support.WithMockUser;
 
 /**
  * Integration tests for StockController.
@@ -40,6 +43,12 @@ class StockControllerTest {
 
     @MockitoBean
     private StockService stockService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private AppUserService appUserService;
 
     private Stock testStock;
 
@@ -59,6 +68,7 @@ class StockControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getAllStocks_ShouldReturnStocksList() throws Exception {
         // Given
         when(stockService.getAllStocks()).thenReturn(Arrays.asList(testStock));
@@ -73,6 +83,7 @@ class StockControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getStockById_WhenExists_ShouldReturnStock() throws Exception {
         // Given
         when(stockService.getStockById(1L)).thenReturn(Optional.of(testStock));
@@ -86,6 +97,7 @@ class StockControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getStockById_WhenNotExists_ShouldReturn404() throws Exception {
         // Given
         when(stockService.getStockById(999L)).thenReturn(Optional.empty());
@@ -98,6 +110,7 @@ class StockControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createStock_WithValidRequest_ShouldReturn201() throws Exception {
         // Given
         CreateStockRequest request = new CreateStockRequest(1L, 1L, 20);
@@ -114,6 +127,7 @@ class StockControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createStock_WithInvalidRequest_ShouldReturn400() throws Exception {
         // Given
         CreateStockRequest request = new CreateStockRequest(null, null, 0);
@@ -128,6 +142,7 @@ class StockControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteStock_WhenExists_ShouldReturn204() throws Exception {
         // Given
         doNothing().when(stockService).deleteStock(1L);
@@ -140,6 +155,7 @@ class StockControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteStock_WhenNotExists_ShouldReturn404() throws Exception {
         // Given
         doThrow(new ResourceNotFoundException("Stock", "id", 999L))
