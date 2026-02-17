@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mls.logistics.domain.Resource;
 import com.mls.logistics.dto.request.CreateResourceRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.security.service.AppUserService;
+import com.mls.logistics.security.service.JwtService;
 import com.mls.logistics.service.ResourceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.security.test.context.support.WithMockUser;
 
 /**
  * Integration tests for ResourceController.
@@ -39,6 +42,12 @@ class ResourceControllerTest {
     @MockitoBean
     private ResourceService resourceService;
 
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private AppUserService appUserService;
+
     private Resource testResource;
 
     @BeforeEach
@@ -51,6 +60,7 @@ class ResourceControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getAllResources_ShouldReturnResourcesList() throws Exception {
         // Given
         when(resourceService.getAllResources()).thenReturn(Arrays.asList(testResource));
@@ -65,6 +75,7 @@ class ResourceControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getResourceById_WhenExists_ShouldReturnResource() throws Exception {
         // Given
         when(resourceService.getResourceById(1L)).thenReturn(Optional.of(testResource));
@@ -79,6 +90,7 @@ class ResourceControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getResourceById_WhenNotExists_ShouldReturn404() throws Exception {
         // Given
         when(resourceService.getResourceById(999L)).thenReturn(Optional.empty());
@@ -91,6 +103,7 @@ class ResourceControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createResource_WithValidRequest_ShouldReturn201() throws Exception {
         // Given
         CreateResourceRequest request = new CreateResourceRequest("New Resource", "Material", "HIGH");
@@ -107,6 +120,7 @@ class ResourceControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createResource_WithInvalidRequest_ShouldReturn400() throws Exception {
         // Given
         CreateResourceRequest request = new CreateResourceRequest("", "", "");
@@ -121,6 +135,7 @@ class ResourceControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteResource_WhenExists_ShouldReturn204() throws Exception {
         // Given
         doNothing().when(resourceService).deleteResource(1L);
@@ -133,6 +148,7 @@ class ResourceControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteResource_WhenNotExists_ShouldReturn404() throws Exception {
         // Given
         doThrow(new ResourceNotFoundException("Resource", "id", 999L))

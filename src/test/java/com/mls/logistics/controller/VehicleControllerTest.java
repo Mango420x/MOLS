@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mls.logistics.domain.Vehicle;
 import com.mls.logistics.dto.request.CreateVehicleRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.security.service.AppUserService;
+import com.mls.logistics.security.service.JwtService;
 import com.mls.logistics.service.VehicleService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.security.test.context.support.WithMockUser;
 
 /**
  * Integration tests for VehicleController.
@@ -39,6 +42,12 @@ class VehicleControllerTest {
     @MockitoBean
     private VehicleService vehicleService;
 
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private AppUserService appUserService;
+
     private Vehicle testVehicle;
 
     @BeforeEach
@@ -51,6 +60,7 @@ class VehicleControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getAllVehicles_ShouldReturnVehiclesList() throws Exception {
         // Given
         when(vehicleService.getAllVehicles()).thenReturn(Arrays.asList(testVehicle));
@@ -65,6 +75,7 @@ class VehicleControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getVehicleById_WhenExists_ShouldReturnVehicle() throws Exception {
         // Given
         when(vehicleService.getVehicleById(1L)).thenReturn(Optional.of(testVehicle));
@@ -79,6 +90,7 @@ class VehicleControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getVehicleById_WhenNotExists_ShouldReturn404() throws Exception {
         // Given
         when(vehicleService.getVehicleById(999L)).thenReturn(Optional.empty());
@@ -91,6 +103,7 @@ class VehicleControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createVehicle_WithValidRequest_ShouldReturn201() throws Exception {
         // Given
         CreateVehicleRequest request = new CreateVehicleRequest("Truck", 1000, "AVAILABLE");
@@ -107,6 +120,7 @@ class VehicleControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createVehicle_WithInvalidRequest_ShouldReturn400() throws Exception {
         // Given
         CreateVehicleRequest request = new CreateVehicleRequest("", 0, "");
@@ -121,6 +135,7 @@ class VehicleControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteVehicle_WhenExists_ShouldReturn204() throws Exception {
         // Given
         doNothing().when(vehicleService).deleteVehicle(1L);
@@ -133,6 +148,7 @@ class VehicleControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteVehicle_WhenNotExists_ShouldReturn404() throws Exception {
         // Given
         doThrow(new ResourceNotFoundException("Vehicle", "id", 999L))

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateWarehouseRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.security.service.AppUserService;
+import com.mls.logistics.security.service.JwtService;
 import com.mls.logistics.service.WarehouseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.security.test.context.support.WithMockUser;
 
 /**
  * Integration tests for WarehouseController.
@@ -39,6 +42,12 @@ class WarehouseControllerTest {
     @MockitoBean
     private WarehouseService warehouseService;
 
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private AppUserService appUserService;
+
     private Warehouse testWarehouse;
 
     @BeforeEach
@@ -50,6 +59,7 @@ class WarehouseControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getAllWarehouses_ShouldReturnWarehousesList() throws Exception {
         // Given
         when(warehouseService.getAllWarehouses()).thenReturn(Arrays.asList(testWarehouse));
@@ -64,6 +74,7 @@ class WarehouseControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getWarehouseById_WhenExists_ShouldReturnWarehouse() throws Exception {
         // Given
         when(warehouseService.getWarehouseById(1L)).thenReturn(Optional.of(testWarehouse));
@@ -78,6 +89,7 @@ class WarehouseControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getWarehouseById_WhenNotExists_ShouldReturn404() throws Exception {
         // Given
         when(warehouseService.getWarehouseById(999L)).thenReturn(Optional.empty());
@@ -90,6 +102,7 @@ class WarehouseControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createWarehouse_WithValidRequest_ShouldReturn201() throws Exception {
         // Given
         CreateWarehouseRequest request = new CreateWarehouseRequest("New Warehouse", "New Location");
@@ -106,6 +119,7 @@ class WarehouseControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createWarehouse_WithInvalidRequest_ShouldReturn400() throws Exception {
         // Given - empty name
         CreateWarehouseRequest request = new CreateWarehouseRequest("", "Location");
@@ -120,6 +134,7 @@ class WarehouseControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteWarehouse_WhenExists_ShouldReturn204() throws Exception {
         // Given
         doNothing().when(warehouseService).deleteWarehouse(1L);
@@ -132,6 +147,7 @@ class WarehouseControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteWarehouse_WhenNotExists_ShouldReturn404() throws Exception {
         // Given
         doThrow(new ResourceNotFoundException("Warehouse", "id", 999L))
