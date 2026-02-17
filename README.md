@@ -1,4 +1,6 @@
-# MOLS – Multimodal Operative Logistic System
+# MOLS — Multimodal Operative Logistics System
+
+![CI](https://github.com/Mango420x/MOLS/actions/workflows/ci.yml/badge.svg)
 
 **Short Description:**  
 A web-based logistics system for tracking resources, stock, and transport across land, sea, and air. Built for clear workflows and full traceability.

@@ -263,7 +263,7 @@ src/main/java/com/mls/logistics/
 - [x] Automated test suite (controller + service)
 - [x] Dockerization (multi-stage image build + compose stack)
 
-### 🚧 Planned (In Order)
+### Planned (In Order)
 1. Security (authentication/authorization)
 2. Deeper integration testing (e.g., Testcontainers)
 3. CI/CD pipeline
