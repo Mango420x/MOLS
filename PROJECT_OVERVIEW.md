@@ -15,6 +15,7 @@
 - **API Docs**: OpenAPI + Swagger UI configured (`OpenApiConfig`) and available at `/swagger-ui.html` and `/v3/api-docs`.
 - **Build**: Maven wrapper present (`mvnw`, `mvnw.cmd`); build artifacts in `target/`.
 - **CI**: GitHub Actions workflow configured at `.github/workflows/ci.yml` (build + tests on push/PR to `main`).
+- **Security**: JWT-based authentication and role-based authorization enabled (`/api/auth/register`, `/api/auth/login`).
 - **Testing**: Controller and service test suites implemented and passing locally via Maven.
 - **Containerization**: Docker multi-stage build + Docker Compose orchestration available for app + database.
 - **Business Rules**: Core stock/order constraints already enforced in services (non-negative stock, automatic movement audit, order item stock ceiling).
@@ -82,6 +83,14 @@ Global error handling and standardized error responses:
 - `GlobalExceptionHandler` with 400/404/500 handling
 - `ErrorResponse`, `ResourceNotFoundException`, `InvalidRequestException`
 
+#### 7. **Security Layer** (`security/`)
+Authentication and authorization components:
+- `SecurityConfig` — stateless security configuration (JWT + role rules)
+- `JwtAuthFilter` — extracts and validates bearer token per request
+- `JwtService` — token generation and validation
+- `AuthController` — public register/login endpoints (`/api/auth/**`)
+- `AppUser`, `Role`, `AppUserRepository`, `AppUserService`
+
 ### Configuration
 - **Database**: PostgreSQL configured in `src/main/resources/application.properties`
 - **Credentials**: Hardcoded for development (no environment variables yet)
@@ -92,6 +101,14 @@ Global error handling and standardized error responses:
    - UI: `http://localhost:8080/swagger-ui.html`
    - JSON spec: `http://localhost:8080/v3/api-docs`
    - Springdoc properties configured in `application.properties`
+- **Security/JWT**:
+    - Public auth endpoints: `POST /api/auth/register`, `POST /api/auth/login`
+    - JWT properties in `application.properties`:
+       - `security.jwt.secret-key`
+       - `security.jwt.expiration-ms`
+    - Authorization model:
+       - `GET /api/**` requires authenticated token (ADMIN or OPERATOR)
+       - `POST/PUT/PATCH/DELETE /api/**` requires role `ADMIN`
 - **Docker**:
    - `Dockerfile` uses multi-stage build (`eclipse-temurin:21-jdk` → `eclipse-temurin:21-jre`)
    - `docker-compose.yml` orchestrates `mols-app` + `mols-db` with healthcheck
@@ -230,6 +247,7 @@ src/main/java/com/mls/logistics/
 ├── domain/          # JPA entities (9 entities)
 ├── repository/      # Spring Data repositories (9 interfaces)
 ├── service/         # Business logic services (9 services)
+├── security/        # JWT auth, users, roles, and security config
 ├── exception/       # Global exception handling and error contracts
 ├── dto/             # Request/response DTO contracts
 ├── config/          # OpenAPI and app configuration classes
@@ -273,14 +291,15 @@ src/main/java/com/mls/logistics/
 - [x] Transactional boundaries (`@Transactional`)
 - [x] OpenAPI configuration (`OpenApiConfig`) and Swagger UI
 - [x] Endpoint documentation annotations (`@Tag`, `@Operation`, `@ApiResponses`)
+- [x] Security layer (JWT authentication + role-based authorization)
 - [x] Automated test suite (controller + service)
 - [x] Dockerization (multi-stage image build + compose stack)
 - [x] GitHub Actions CI pipeline (build + test on push/PR to `main`)
 
 ### Planned (In Order)
-1. Security (authentication/authorization)
-2. Deeper integration testing (e.g., Testcontainers)
-3. CD pipeline (deployment/release automation)
+1. Deeper integration testing (e.g., Testcontainers)
+2. CD pipeline (deployment/release automation)
+3. Security hardening (refresh tokens, key rotation, secrets management)
 
 ## API Endpoints Reference
 
@@ -301,12 +320,21 @@ All endpoints follow RESTful conventions:
 Additional stock operation:
 - `PATCH /api/stocks/{id}/adjust` — adjusts stock by delta and auto-creates movement audit record.
 
+Authentication endpoints:
+- `POST /api/auth/register` — register user and return JWT
+- `POST /api/auth/login` — authenticate and return JWT
+
 ## Troubleshooting
 
 ### Business Rule Validation (2026-02-17)
 - Stock negative prevention validated: adjusting below zero returns HTTP 409.
 - Automatic movement audit validated: stock adjustment creates `ENTRY` movement.
 - Order item stock ceiling validated: excessive quantity returns HTTP 409.
+
+### Security Validation (2026-02-17)
+- `GET /api/warehouses` without token returns HTTP 403.
+- `GET /api/warehouses` with valid token returns HTTP 200.
+- `POST /api/warehouses` with `OPERATOR` token returns HTTP 403.
 
 ### Application Won't Start
 - Check PostgreSQL is running: `psql -U logistics_user -d logistics_db`
@@ -364,7 +392,7 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 - **Documentation**: `README.md`, `PROJECT_CONTEXT.md`
 - **Recommended Actions**:
   - Test all API endpoints with Postman/cURL
-   - Enforce core business rules in services
+   - Add integration tests for auth flows and role restrictions
    - Add unit/integration tests (controller + service + repository)
    - Review validation rules for all request DTOs
 

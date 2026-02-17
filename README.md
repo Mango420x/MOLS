@@ -35,6 +35,7 @@ MOLS is built as a modern backend-first system:
 - **PostgreSQL** stores operational data with strong consistency.
 - **Maven** manages builds and dependencies.
 - **OpenAPI (Springdoc)** provides interactive API documentation via Swagger UI.
+- **Spring Security + JWT** secure the API with stateless authentication and role-based authorization.
 - **Docker + Docker Compose** provide reproducible local runtime for app + PostgreSQL.
 
 These choices emphasize reliability, traceability, and long-term maintainability.
@@ -71,6 +72,25 @@ Currently enforced in the service layer:
 - Stock cannot go negative (invalid adjustments return HTTP 409)
 - Stock changes automatically create movement audit records (`ENTRY`/`EXIT`)
 - Order item quantity cannot exceed available stock (returns HTTP 409)
+
+---
+
+## Security (JWT + Roles)
+
+MOLS now uses stateless JWT authentication:
+
+- Public endpoints:
+	- `POST /api/auth/register`
+	- `POST /api/auth/login`
+- Protected API rules:
+	- `GET /api/**` → authenticated users (`ADMIN` or `OPERATOR`)
+	- `POST/PUT/PATCH/DELETE /api/**` → `ADMIN` only
+
+Verified locally:
+
+- No token on protected GET returns `403`
+- Valid token on GET returns `200`
+- `OPERATOR` token on protected POST returns `403`
 
 ---
 
@@ -139,6 +159,8 @@ Run all tests with:
 ```powershell
 ./mvnw.cmd test
 ```
+
+Current local status: full suite passing (`118` tests).
 
 ---
 
