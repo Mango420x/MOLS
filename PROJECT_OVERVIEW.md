@@ -15,6 +15,7 @@
 - **API Docs**: OpenAPI + Swagger UI configured (`OpenApiConfig`) and available at `/swagger-ui.html` and `/v3/api-docs`.
 - **Build**: Maven wrapper present (`mvnw`, `mvnw.cmd`); build artifacts in `target/`.
 - **Testing**: Controller and service test suites implemented and passing locally via Maven.
+- **Containerization**: Docker multi-stage build + Docker Compose orchestration available for app + database.
 
 ## What This Repository Contains
 
@@ -89,6 +90,10 @@ Global error handling and standardized error responses:
    - UI: `http://localhost:8080/swagger-ui.html`
    - JSON spec: `http://localhost:8080/v3/api-docs`
    - Springdoc properties configured in `application.properties`
+- **Docker**:
+   - `Dockerfile` uses multi-stage build (`eclipse-temurin:21-jdk` → `eclipse-temurin:21-jre`)
+   - `docker-compose.yml` orchestrates `mols-app` + `mols-db` with healthcheck
+   - PostgreSQL host port mapping: `5433:5432`
 
 ## Where to Start (For a New Developer)
 
@@ -115,6 +120,12 @@ Global error handling and standardized error responses:
    ```powershell
    ./mvnw.cmd clean install
    ./mvnw.cmd spring-boot:run
+   ```
+
+   **or with Docker Compose**:
+   ```powershell
+   docker compose up --build -d
+   docker compose logs -f app
    ```
 
 6. **Test the API**:
@@ -214,6 +225,15 @@ src/main/java/com/mls/logistics/
 └── LogisticsApplication.java
 ```
 
+### Containerization
+
+```
+.
+├── Dockerfile
+├── docker-compose.yml
+└── .dockerignore
+```
+
 ## Current Implementation Status
 
 ### ✅ Completed
@@ -231,13 +251,13 @@ src/main/java/com/mls/logistics/
 - [x] OpenAPI configuration (`OpenApiConfig`) and Swagger UI
 - [x] Endpoint documentation annotations (`@Tag`, `@Operation`, `@ApiResponses`)
 - [x] Automated test suite (controller + service)
+- [x] Dockerization (multi-stage image build + compose stack)
 
 ### 🚧 Planned (In Order)
 1. Enforce domain business rules (stock, order/stock constraints, movement audit)
 2. Security (authentication/authorization)
 3. Deeper integration testing (e.g., Testcontainers)
-4. Dockerization
-5. CI/CD pipeline
+4. CI/CD pipeline
 
 ## API Endpoints Reference
 
@@ -278,6 +298,20 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 ./mvnw.cmd clean install -U  # Force update dependencies
 ```
 
+### Docker Compose Issues
+- Check containers:
+   ```powershell
+   docker compose ps
+   ```
+- Check app logs:
+   ```powershell
+   docker compose logs -f app
+   ```
+- Stop stack:
+   ```powershell
+   docker compose down
+   ```
+
 ## Technology Stack
 
 - **Language**: Java 21
@@ -288,6 +322,7 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 - **Database**: PostgreSQL
 - **ORM**: Hibernate (JPA)
 - **Build Tool**: Maven 3.x (wrapper included)
+- **Containerization**: Docker + Docker Compose
 - **IDE**: VS Code (NOT IntelliJ)
 - **OS**: Windows 11
 - **Version Control**: GitHub (via GitHub Desktop)

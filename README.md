@@ -33,6 +33,7 @@ MOLS is built as a modern backend-first system:
 - **PostgreSQL** stores operational data with strong consistency.
 - **Maven** manages builds and dependencies.
 - **OpenAPI (Springdoc)** provides interactive API documentation via Swagger UI.
+- **Docker + Docker Compose** provide reproducible local runtime for app + PostgreSQL.
 
 These choices emphasize reliability, traceability, and long-term maintainability.
 
@@ -84,6 +85,34 @@ Controllers are documented with OpenAPI annotations (`@Tag`, `@Operation`, `@Api
 4. Open:
 	- API base: http://localhost:8080
 	- Swagger UI: http://localhost:8080/swagger-ui.html
+
+---
+
+## Run with Docker
+
+This repository includes:
+
+- `Dockerfile` (multi-stage image build)
+- `docker-compose.yml` (app + PostgreSQL stack)
+
+Run everything with:
+
+```powershell
+docker compose up --build -d
+```
+
+Useful commands:
+
+```powershell
+docker compose ps
+docker compose logs -f app
+docker compose down
+```
+
+Ports:
+
+- App: `8080` (host) → `8080` (container)
+- Postgres: `5433` (host) → `5432` (container)
 
 ---
 

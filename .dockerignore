@@ -1,0 +1,18 @@
+# Maven build output - not needed, we build inside Docker
+target/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Git files
+.git/
+.gitignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md

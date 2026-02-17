@@ -1,0 +1,55 @@
+# ================================================
+# MOLS Docker Compose
+# Orchestrates Spring Boot app + PostgreSQL
+# ================================================
+
+name: MOLS
+
+services:
+
+  # -----------------------------------------------
+  # PostgreSQL Database
+  # -----------------------------------------------
+  db:
+    image: postgres:17
+    container_name: mols-db
+    environment:
+      POSTGRES_DB: logistics_db
+      POSTGRES_USER: logistics_user
+      POSTGRES_PASSWORD: logistics123
+    ports:
+      - "5433:5432"   # Host 5433 → Container 5432
+                      # Avoids conflict with your local PostgreSQL on 5432
+    volumes:
+      - mols-db-data:/var/lib/postgresql/data   # Persist data between restarts
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logistics_user -d logistics_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -----------------------------------------------
+  # Spring Boot Application
+  # -----------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mols-app
+    ports:
+      - "8080:8080"
+    environment:
+      # Override application.properties with container values
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/logistics_db
+      SPRING_DATASOURCE_USERNAME: logistics_user
+      SPRING_DATASOURCE_PASSWORD: logistics123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      db:
+        condition: service_healthy   # Wait for PostgreSQL to be ready before starting app
+
+# -----------------------------------------------
+# Named volumes (data persists between restarts)
+# -----------------------------------------------
+volumes:
+  mols-db-data:

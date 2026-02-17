@@ -1,0 +1,40 @@
+# ================================================
+# Stage 1: Build
+# Uses Maven + JDK to compile and package the app
+# ================================================
+FROM eclipse-temurin:21-jdk AS builder
+
+# Set working directory inside the container
+WORKDIR /app
+
+# Copy Maven wrapper and pom.xml first
+# Docker caches this layer - dependencies only re-download when pom.xml changes
+COPY mvnw mvnw.cmd pom.xml ./
+COPY .mvn .mvn
+
+# Download dependencies (cached layer)
+RUN ./mvnw dependency:go-offline -B
+
+# Copy source code
+COPY src ./src
+
+# Build the JAR, skipping tests (tests run in CI, not in Docker build)
+RUN ./mvnw clean package -DskipTests
+
+# ================================================
+# Stage 2: Runtime
+# Uses only JRE (smaller image, no build tools)
+# ================================================
+FROM eclipse-temurin:21-jre
+
+# Set working directory
+WORKDIR /app
+
+# Copy only the built JAR from the builder stage
+COPY --from=builder /app/target/*.jar app.jar
+
+# Expose application port
+EXPOSE 8080
+
+# Run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]
