@@ -34,6 +34,9 @@ class OrderItemServiceTest {
     @Mock
     private OrderItemRepository orderItemRepository;
 
+    @Mock
+    private StockService stockService;
+
     @InjectMocks
     private OrderItemService orderItemService;
 
@@ -100,6 +103,7 @@ class OrderItemServiceTest {
     void createOrderItem_WithValidRequest_ShouldReturnCreatedOrderItem() {
         // Given
         CreateOrderItemRequest request = new CreateOrderItemRequest(1L, 1L, 10);
+        when(stockService.getTotalAvailableQuantity(1L)).thenReturn(100);
         when(orderItemRepository.save(any(OrderItem.class))).thenReturn(testOrderItem);
 
         // When
@@ -108,6 +112,7 @@ class OrderItemServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getQuantity()).isEqualTo(10);
+        verify(stockService, times(1)).getTotalAvailableQuantity(1L);
         verify(orderItemRepository, times(1)).save(any(OrderItem.class));
     }
 

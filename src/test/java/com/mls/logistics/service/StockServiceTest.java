@@ -1,10 +1,12 @@
 package com.mls.logistics.service;
 
+import com.mls.logistics.domain.Movement;
 import com.mls.logistics.domain.Resource;
 import com.mls.logistics.domain.Stock;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateStockRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.repository.MovementRepository;
 import com.mls.logistics.repository.StockRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +35,9 @@ class StockServiceTest {
 
     @Mock
     private StockRepository stockRepository;
+
+    @Mock
+    private MovementRepository movementRepository;
 
     @InjectMocks
     private StockService stockService;
@@ -101,6 +106,7 @@ class StockServiceTest {
         // Given
         CreateStockRequest request = new CreateStockRequest(1L, 1L, 20);
         when(stockRepository.save(any(Stock.class))).thenReturn(testStock);
+        when(movementRepository.save(any(Movement.class))).thenReturn(new Movement());
 
         // When
         Stock result = stockService.createStock(request);
@@ -109,6 +115,7 @@ class StockServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getQuantity()).isEqualTo(20);
         verify(stockRepository, times(1)).save(any(Stock.class));
+        verify(movementRepository, times(1)).save(any(Movement.class));
     }
 
     @Test
