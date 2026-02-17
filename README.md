@@ -16,11 +16,11 @@ For deeper technical details, see [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md).
 ---
 
 <details>
-<summary>Resumen en espanol (ES)</summary>
+<summary>Resumen en español (🇪🇸)</summary>
 
-MOLS es un proyecto de portfolio profesional que demuestra una arquitectura backend clara y mantenible para operaciones logisticas reales. Permite gestionar pedidos, stock, almacenes, vehiculos y envios, con trazabilidad completa de movimientos.
+MOLS es un proyecto de portfolio profesional que demuestra una arquitectura backend clara y mantenible para operaciones logísticas reales. Permite gestionar pedidos, stock, almacenes, vehículos y envíos, con trazabilidad completa de movimientos.
 
-La arquitectura se organiza en capas (API, servicios, datos y dominio), lo que facilita el mantenimiento, el testeo y la evolucion del sistema. Para mas detalle tecnico, consulta [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md).
+La arquitectura se organiza en capas (API, servicios, datos y dominio), lo que facilita el mantenimiento, el testeo y la evolución del sistema. Para más detalle tecnico, consulta [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md).
 </details>
 
 ---
