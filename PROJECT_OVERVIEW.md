@@ -16,6 +16,7 @@
 - **Build**: Maven wrapper present (`mvnw`, `mvnw.cmd`); build artifacts in `target/`.
 - **Testing**: Controller and service test suites implemented and passing locally via Maven.
 - **Containerization**: Docker multi-stage build + Docker Compose orchestration available for app + database.
+- **Business Rules**: Core stock/order constraints already enforced in services (non-negative stock, automatic movement audit, order item stock ceiling).
 
 ## What This Repository Contains
 
@@ -166,7 +167,16 @@ These rules are **enforced in services**, not controllers:
 4. Vehicles must be compatible with shipment transport type
 5. Orders are complete only when fully delivered
 
-**Note**: Full validation implementation is planned for future phases.
+### Current Enforcement Status
+
+- ✅ Rule 1 implemented in `StockService.adjustStock()` and `StockService.createStock()`
+   - Rejects negative initial quantity
+   - Rejects adjustments that would produce negative stock (`InsufficientStockException`, HTTP 409)
+- ✅ Rule 2 implemented in `StockService`
+   - Every stock increase/decrease records a `Movement` (`ENTRY`/`EXIT`) automatically
+- ✅ Rule 3 implemented in `OrderItemService.createOrderItem(CreateOrderItemRequest)`
+   - Rejects order items where requested quantity exceeds total available stock (`InsufficientStockException`, HTTP 409)
+- 🚧 Rules 4 and 5 remain planned for future phases.
 
 ## Developer Guidelines
 
@@ -254,7 +264,7 @@ src/main/java/com/mls/logistics/
 - [x] Dockerization (multi-stage image build + compose stack)
 
 ### 🚧 Planned (In Order)
-1. Enforce domain business rules (stock, order/stock constraints, movement audit)
+1. Enforce remaining domain rules (vehicle compatibility and order completion lifecycle)
 2. Security (authentication/authorization)
 3. Deeper integration testing (e.g., Testcontainers)
 4. CI/CD pipeline
@@ -275,7 +285,15 @@ All endpoints follow RESTful conventions:
 | Shipment | `/api/shipments` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Movement | `/api/movements` | ✅ | ✅ | ✅ | ✅ | ✅ |
 
+Additional stock operation:
+- `PATCH /api/stocks/{id}/adjust` — adjusts stock by delta and auto-creates movement audit record.
+
 ## Troubleshooting
+
+### Business Rule Validation (2026-02-17)
+- Stock negative prevention validated: adjusting below zero returns HTTP 409.
+- Automatic movement audit validated: stock adjustment creates `ENTRY` movement.
+- Order item stock ceiling validated: excessive quantity returns HTTP 409.
 
 ### Application Won't Start
 - Check PostgreSQL is running: `psql -U logistics_user -d logistics_db`

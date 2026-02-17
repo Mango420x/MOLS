@@ -62,6 +62,16 @@ This structure keeps logic centralized, makes testing easier, and supports futur
 
 ---
 
+## Business Rules Status
+
+Currently enforced in the service layer:
+
+- Stock cannot go negative (invalid adjustments return HTTP 409)
+- Stock changes automatically create movement audit records (`ENTRY`/`EXIT`)
+- Order item quantity cannot exceed available stock (returns HTTP 409)
+
+---
+
 ## API Documentation (Swagger)
 
 With the application running:
@@ -70,6 +80,10 @@ With the application running:
 - **OpenAPI JSON**: http://localhost:8080/v3/api-docs
 
 Controllers are documented with OpenAPI annotations (`@Tag`, `@Operation`, `@ApiResponses`) for consistent endpoint docs.
+
+Notable stock operation:
+
+- `PATCH /api/stocks/{id}/adjust` adjusts quantity by delta and records movement automatically.
 
 ---
 

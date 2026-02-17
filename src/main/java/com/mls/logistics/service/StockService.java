@@ -1,36 +1,54 @@
 package com.mls.logistics.service;
 
+import com.mls.logistics.domain.Movement;
 import com.mls.logistics.domain.Resource;
 import com.mls.logistics.domain.Stock;
 import com.mls.logistics.domain.Warehouse;
+import com.mls.logistics.dto.request.AdjustStockRequest;
 import com.mls.logistics.dto.request.CreateStockRequest;
-import com.mls.logistics.dto.request.UpdateStockRequest;
+import com.mls.logistics.exception.InsufficientStockException;
+import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.repository.MovementRepository;
 import com.mls.logistics.repository.StockRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * Service layer for Stock-related business operations.
- * 
- * This class acts as an intermediary between controllers and repositories,
- * enforcing business rules and application logic.
+ *
+ * Enforces the following business rules:
+ * - Stock quantity can never go negative (Rule 1)
+ * - Every stock change automatically generates a Movement audit record (Rule 2)
+ *
+ * Direct quantity manipulation via updateStock() is intentionally prohibited.
+ * All quantity changes must go through adjustStock() to guarantee auditability.
  */
 @Service
 @Transactional(readOnly = true)
 public class StockService {
 
     private final StockRepository stockRepository;
+    private final MovementRepository movementRepository;
 
     /**
      * Constructor-based dependency injection.
-     * This is the recommended approach in Spring.
+     *
+     * MovementRepository is injected here because StockService is responsible
+     * for creating Movement records whenever stock changes. This keeps the
+     * audit trail creation coupled to the stock change, not to the caller.
+     *
+     * @param stockRepository    repository for stock persistence
+     * @param movementRepository repository for movement audit persistence
      */
-    public StockService(StockRepository stockRepository) {
+    public StockService(StockRepository stockRepository,
+                        MovementRepository movementRepository) {
         this.stockRepository = stockRepository;
+        this.movementRepository = movementRepository;
     }
 
     /**
@@ -48,79 +66,120 @@ public class StockService {
     }
 
     /**
-     * Creates a new stock.
-     * 
-     * Business rules can be added here in the future
-     * (e.g. inventory management and thresholds).
-     */
-    @Transactional
-    public Stock createStock(Stock stock) {
-        return stockRepository.save(stock);
-    }
-
-    /**
-     * Creates a new stock from a DTO request.
-     * 
-     * This method separates API contracts from domain logic.
+     * Creates a new stock record for a resource in a warehouse.
      *
-     * @param request DTO containing stock data
+     * Initial quantity must be zero or positive.
+     * If initial quantity is greater than zero, an ENTRY movement is recorded.
+     *
+     * @param request DTO containing stock creation data
      * @return created stock entity
+     * @throws InvalidRequestException if initial quantity is negative
      */
     @Transactional
     public Stock createStock(CreateStockRequest request) {
+        // Rule 1: initial quantity cannot be negative
+        if (request.getQuantity() < 0) {
+            throw new InvalidRequestException(
+                "Initial stock quantity cannot be negative. Provided: " + request.getQuantity()
+            );
+        }
+
         Stock stock = new Stock();
 
         Resource resource = new Resource();
         resource.setId(request.getResourceId());
+        stock.setResource(resource);
 
         Warehouse warehouse = new Warehouse();
         warehouse.setId(request.getWarehouseId());
-
-        stock.setResource(resource);
         stock.setWarehouse(warehouse);
-        stock.setQuantity(request.getQuantity());
 
-        return stockRepository.save(stock);
+        stock.setQuantity(request.getQuantity());
+        Stock savedStock = stockRepository.save(stock);
+
+        // Rule 2: if initial quantity > 0, record an ENTRY movement
+        if (request.getQuantity() > 0) {
+            recordMovement(savedStock, "ENTRY", request.getQuantity());
+        }
+
+        return savedStock;
     }
 
     /**
-     * Updates an existing stock.
-     * 
-     * Only non-null fields from the request are updated.
+     * Adjusts stock quantity by a delta value.
      *
-     * @param id stock identifier
-     * @param request update data
-     * @return updated stock
-     * @throws ResourceNotFoundException if stock doesn't exist
+     * This is the ONLY method that modifies stock quantity.
+     * Direct quantity updates are prohibited to guarantee audit trail integrity.
+     *
+     * The delta can be positive (adding stock) or negative (removing stock).
+     * Movement type is determined automatically:
+     * - Positive delta → ENTRY
+     * - Negative delta → EXIT
+     *
+     * @param id      stock identifier
+     * @param request DTO containing the quantity delta and optional reason
+     * @return updated stock entity
+     * @throws ResourceNotFoundException   if stock does not exist
+     * @throws InsufficientStockException  if adjustment would result in negative quantity
+     * @throws InvalidRequestException     if delta is zero
      */
     @Transactional
-    public Stock updateStock(Long id, UpdateStockRequest request) {
+    public Stock adjustStock(Long id, AdjustStockRequest request) {
         Stock stock = stockRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Stock", "id", id));
 
-        if (request.getResourceId() != null) {
-            Resource resource = new Resource();
-            resource.setId(request.getResourceId());
-            stock.setResource(resource);
-        }
-        if (request.getWarehouseId() != null) {
-            Warehouse warehouse = new Warehouse();
-            warehouse.setId(request.getWarehouseId());
-            stock.setWarehouse(warehouse);
-        }
-        if (request.getQuantity() != null) {
-            stock.setQuantity(request.getQuantity());
+        int delta = request.getDelta();
+
+        // Reject zero adjustments — they serve no purpose and pollute the audit trail
+        if (delta == 0) {
+            throw new InvalidRequestException(
+                "Stock adjustment delta cannot be zero."
+            );
         }
 
-        return stockRepository.save(stock);
+        int newQuantity = stock.getQuantity() + delta;
+
+        // Rule 1: stock quantity can never go negative
+        if (newQuantity < 0) {
+            throw new InsufficientStockException(
+                "Insufficient stock. Available: " + stock.getQuantity() +
+                ", requested reduction: " + Math.abs(delta) +
+                ". Stock id: " + id
+            );
+        }
+
+        stock.setQuantity(newQuantity);
+        Stock savedStock = stockRepository.save(stock);
+
+        // Rule 2: record movement automatically
+        String movementType = delta > 0 ? "ENTRY" : "EXIT";
+        recordMovement(savedStock, movementType, Math.abs(delta));
+
+        return savedStock;
     }
 
     /**
-     * Deletes a stock by ID.
+     * Returns the total available quantity of a resource across all warehouses.
+     *
+     * Used by OrderItemService to validate order requests against available supply.
+     *
+     * @param resourceId the resource identifier
+     * @return total quantity available across all warehouses
+     */
+    public int getTotalAvailableQuantity(Long resourceId) {
+        return stockRepository
+                .findByResourceId(resourceId)
+                .stream()
+                .mapToInt(Stock::getQuantity)
+                .sum();
+    }
+
+    /**
+     * Deletes a stock record.
      *
      * @param id stock identifier
-     * @throws ResourceNotFoundException if stock doesn't exist
+     * @throws ResourceNotFoundException if stock does not exist
      */
     @Transactional
     public void deleteStock(Long id) {
@@ -128,5 +187,24 @@ public class StockService {
             throw new ResourceNotFoundException("Stock", "id", id);
         }
         stockRepository.deleteById(id);
+    }
+
+    /**
+     * Records a Movement audit entry for a stock change.
+     *
+     * Private method — called internally after every stock quantity change.
+     * Movements are never created directly from the API for stock changes.
+     *
+     * @param stock    the stock that was modified
+     * @param type     movement type: ENTRY or EXIT
+     * @param quantity absolute quantity affected (always positive)
+     */
+    private void recordMovement(Stock stock, String type, int quantity) {
+        Movement movement = new Movement();
+        movement.setStock(stock);
+        movement.setType(type);
+        movement.setQuantity(quantity);
+        movement.setDateTime(LocalDateTime.now());
+        movementRepository.save(movement);
     }
 }

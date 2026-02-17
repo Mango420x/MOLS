@@ -2,7 +2,7 @@ package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Stock;
 import com.mls.logistics.dto.request.CreateStockRequest;
-import com.mls.logistics.dto.request.UpdateStockRequest;
+import com.mls.logistics.dto.request.AdjustStockRequest;
 import com.mls.logistics.dto.response.StockResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.StockService;
@@ -112,33 +112,6 @@ public class StockController {
     }
 
     /**
-     * Updates an existing stock record.
-     *
-     * PUT /api/stocks/{id}
-     *
-     * @param id stock identifier
-     * @param request update data
-     * @return updated stock with HTTP 200 status
-     */
-    @Operation(
-        summary = "Update a stock",
-        description = "Updates an existing stock record. Only provided fields are updated."
-    )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Stock updated successfully"),
-        @ApiResponse(responseCode = "404", description = "Stock not found"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data")
-    })
-    @PutMapping("/{id}")
-    public ResponseEntity<StockResponse> updateStock(
-            @Parameter(description = "Stock identifier", example = "1")
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateStockRequest request) {
-        Stock updatedStock = stockService.updateStock(id, request);
-        return ResponseEntity.ok(StockResponse.from(updatedStock));
-    }
-
-    /**
      * Deletes a stock record.
      *
      * DELETE /api/stocks/{id}
@@ -160,5 +133,41 @@ public class StockController {
             @PathVariable Long id) {
         stockService.deleteStock(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Adjusts stock quantity by a delta value.
+     *
+     * PATCH /api/stocks/{id}/adjust
+     *
+     * This is the only valid way to modify stock quantity.
+     * Positive delta adds stock (ENTRY), negative delta removes stock (EXIT).
+     * Every adjustment automatically generates a Movement audit record.
+     *
+     * @param id      stock identifier
+     * @param request delta and optional reason
+     * @return updated stock with HTTP 200 status
+     */
+    @Operation(
+        summary = "Adjust stock quantity",
+        description = """
+            Adjusts stock by a delta value. Positive = ENTRY, Negative = EXIT.
+            Automatically generates a Movement audit record.
+            Stock can never go below zero.
+            """
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Stock adjusted successfully"),
+        @ApiResponse(responseCode = "404", description = "Stock not found"),
+        @ApiResponse(responseCode = "409", description = "Insufficient stock for this adjustment"),
+        @ApiResponse(responseCode = "400", description = "Invalid delta value")
+    })
+    @PatchMapping("/{id}/adjust")
+    public ResponseEntity<StockResponse> adjustStock(
+            @Parameter(description = "Stock identifier", example = "1")
+            @PathVariable Long id,
+            @Valid @RequestBody AdjustStockRequest request) {
+        Stock adjustedStock = stockService.adjustStock(id, request);
+        return ResponseEntity.ok(StockResponse.from(adjustedStock));
     }
 }

@@ -7,6 +7,8 @@ import com.mls.logistics.dto.request.CreateOrderItemRequest;
 import com.mls.logistics.dto.request.UpdateOrderItemRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderItemRepository;
+import com.mls.logistics.exception.InsufficientStockException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +26,16 @@ import java.util.Optional;
 public class OrderItemService {
 
     private final OrderItemRepository orderItemRepository;
+    private final StockService stockService;
 
     /**
      * Constructor-based dependency injection.
      * This is the recommended approach in Spring.
      */
-    public OrderItemService(OrderItemRepository orderItemRepository) {
+    public OrderItemService(OrderItemRepository orderItemRepository,
+                            @Lazy StockService stockService) {
         this.orderItemRepository = orderItemRepository;
+        this.stockService = stockService;
     }
 
     /**
@@ -68,18 +73,24 @@ public class OrderItemService {
      */
     @Transactional
     public OrderItem createOrderItem(CreateOrderItemRequest request) {
-        OrderItem orderItem = new OrderItem();
+        // Rule 3: requested quantity must not exceed available stock
+        int available = stockService.getTotalAvailableQuantity(request.getResourceId());
+        if (request.getQuantity() > available) {
+            throw new InsufficientStockException(
+                "Cannot create order item. Requested: " + request.getQuantity() +
+                ", available in stock: " + available +
+                ". Resource id: " + request.getResourceId()
+            );
+        }
 
+        OrderItem orderItem = new OrderItem();
         Order order = new Order();
         order.setId(request.getOrderId());
-
         Resource resource = new Resource();
         resource.setId(request.getResourceId());
-
         orderItem.setOrder(order);
         orderItem.setResource(resource);
         orderItem.setQuantity(request.getQuantity());
-
         return orderItemRepository.save(orderItem);
     }
 

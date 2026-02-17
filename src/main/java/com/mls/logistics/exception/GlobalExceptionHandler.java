@@ -126,6 +126,31 @@ public class GlobalExceptionHandler {
         errorResponse.put("fieldErrors", fieldErrors);
         errorResponse.put("path", request.getDescription(false).replace("uri=", ""));
 
-                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-        }
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Handles InsufficientStockException.
+     *
+     * Returns 409 Conflict when a stock operation cannot be completed
+     * due to insufficient available quantity.
+     *
+     * @param ex      the exception that was thrown
+     * @param request the web request during which the exception occurred
+     * @return ResponseEntity with error details and 409 status
+     */
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientStockException(
+            InsufficientStockException ex,
+            WebRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", "")
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
 }
