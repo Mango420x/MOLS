@@ -12,8 +12,9 @@
 - **Architecture**: Classic four-layer architecture (Controllers → Services → Repositories → Database) with DTOs and a global exception handler.
 - **Database**: PostgreSQL (`logistics_db` database, `logistics_user` credentials configured).
 - **API Status**: CRUD REST API implemented and operational at `http://localhost:8080/api/*` (GET/POST/PUT/DELETE with DTOs + validation).
+- **API Docs**: OpenAPI + Swagger UI configured (`OpenApiConfig`) and available at `/swagger-ui.html` and `/v3/api-docs`.
 - **Build**: Maven wrapper present (`mvnw`, `mvnw.cmd`); build artifacts in `target/`.
-- **Testing**: Basic Spring context test only; no H2/Testcontainers integration yet.
+- **Testing**: Controller and service test suites implemented and passing locally via Maven.
 
 ## What This Repository Contains
 
@@ -84,6 +85,10 @@ Global error handling and standardized error responses:
 - **Hibernate**: `ddl-auto=update` — auto-creates schema on startup
 - **SQL Logging**: `spring.jpa.show-sql=true`
 - **Port**: Application runs on `8080`
+- **OpenAPI/Swagger**:
+   - UI: `http://localhost:8080/swagger-ui.html`
+   - JSON spec: `http://localhost:8080/v3/api-docs`
+   - Springdoc properties configured in `application.properties`
 
 ## Where to Start (For a New Developer)
 
@@ -98,6 +103,7 @@ Global error handling and standardized error responses:
 3. **Review the API**:
    - All controllers follow identical patterns
    - Check `WarehouseController` as the reference implementation
+   - Explore endpoints in Swagger UI: `http://localhost:8080/swagger-ui.html`
 
 4. **Setup Database**:
    ```powershell
@@ -202,8 +208,9 @@ src/main/java/com/mls/logistics/
 ├── domain/          # JPA entities (9 entities)
 ├── repository/      # Spring Data repositories (9 interfaces)
 ├── service/         # Business logic services (9 services)
-├── exception/       # Custom exceptions (planned)
-├── dto/             # DTOs for API contracts (planned)
+├── exception/       # Global exception handling and error contracts
+├── dto/             # Request/response DTO contracts
+├── config/          # OpenAPI and app configuration classes
 └── LogisticsApplication.java
 ```
 
@@ -221,11 +228,14 @@ src/main/java/com/mls/logistics/
 - [x] Global exception handling (`@RestControllerAdvice`)
 - [x] Input validation (`@Valid`, Bean Validation)
 - [x] Transactional boundaries (`@Transactional`)
+- [x] OpenAPI configuration (`OpenApiConfig`) and Swagger UI
+- [x] Endpoint documentation annotations (`@Tag`, `@Operation`, `@ApiResponses`)
+- [x] Automated test suite (controller + service)
 
 ### 🚧 Planned (In Order)
 1. Enforce domain business rules (stock, order/stock constraints, movement audit)
 2. Security (authentication/authorization)
-3. Comprehensive testing (unit + integration)
+3. Deeper integration testing (e.g., Testcontainers)
 4. Dockerization
 5. CI/CD pipeline
 
@@ -272,6 +282,7 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Language**: Java 21
 - **Framework**: Spring Boot 4.0.2 (Spring MVC, Spring Data JPA)
+- **API Documentation**: Springdoc OpenAPI (Swagger UI)
 - **Validation**: Spring Boot Starter Validation (Bean Validation)
 - **Observability**: Spring Boot Actuator
 - **Database**: PostgreSQL

@@ -32,6 +32,7 @@ MOLS is built as a modern backend-first system:
 - **Java + Spring Boot** provide the core REST API and service layer.
 - **PostgreSQL** stores operational data with strong consistency.
 - **Maven** manages builds and dependencies.
+- **OpenAPI (Springdoc)** provides interactive API documentation via Swagger UI.
 
 These choices emphasize reliability, traceability, and long-term maintainability.
 
@@ -56,6 +57,18 @@ This structure keeps logic centralized, makes testing easier, and supports futur
 - Manage warehouses and stock levels
 - Assign vehicles and follow shipments
 - Keep a full audit trail of movements
+- Explore and test all endpoints through Swagger UI
+
+---
+
+## API Documentation (Swagger)
+
+With the application running:
+
+- **Swagger UI**: http://localhost:8080/swagger-ui.html
+- **OpenAPI JSON**: http://localhost:8080/v3/api-docs
+
+Controllers are documented with OpenAPI annotations (`@Tag`, `@Operation`, `@ApiResponses`) for consistent endpoint docs.
 
 ---
 
@@ -63,7 +76,24 @@ This structure keeps logic centralized, makes testing easier, and supports futur
 
 1. Clone the repository.
 2. Configure the database in `application.properties`.
-3. Run the application and open http://localhost:8080.
+3. Run:
+	```powershell
+	./mvnw.cmd clean compile
+	./mvnw.cmd spring-boot:run
+	```
+4. Open:
+	- API base: http://localhost:8080
+	- Swagger UI: http://localhost:8080/swagger-ui.html
+
+---
+
+## Testing
+
+Run all tests with:
+
+```powershell
+./mvnw.cmd test
+```
 
 ---
 
