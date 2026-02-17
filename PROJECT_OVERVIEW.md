@@ -14,6 +14,7 @@
 - **API Status**: CRUD REST API implemented and operational at `http://localhost:8080/api/*` (GET/POST/PUT/DELETE with DTOs + validation).
 - **API Docs**: OpenAPI + Swagger UI configured (`OpenApiConfig`) and available at `/swagger-ui.html` and `/v3/api-docs`.
 - **Build**: Maven wrapper present (`mvnw`, `mvnw.cmd`); build artifacts in `target/`.
+- **CI**: GitHub Actions workflow configured at `.github/workflows/ci.yml` (build + tests on push/PR to `main`).
 - **Testing**: Controller and service test suites implemented and passing locally via Maven.
 - **Containerization**: Docker multi-stage build + Docker Compose orchestration available for app + database.
 - **Business Rules**: Core stock/order constraints already enforced in services (non-negative stock, automatic movement audit, order item stock ceiling).
@@ -244,6 +245,18 @@ src/main/java/com/mls/logistics/
 └── .dockerignore
 ```
 
+### Continuous Integration (GitHub Actions)
+
+- Workflow file: `.github/workflows/ci.yml`
+- Triggers: `push` and `pull_request` on `main`
+- Runner: `ubuntu-latest`
+- Java setup: Temurin JDK 21
+- Build checks:
+   - `./mvnw clean compile -B`
+   - `./mvnw test -B`
+- CI database: PostgreSQL 17 service container (`logistics_db`, `logistics_user`)
+- CI optimization: Maven dependency caching (`~/.m2`)
+
 ## Current Implementation Status
 
 ### ✅ Completed
@@ -262,11 +275,12 @@ src/main/java/com/mls/logistics/
 - [x] Endpoint documentation annotations (`@Tag`, `@Operation`, `@ApiResponses`)
 - [x] Automated test suite (controller + service)
 - [x] Dockerization (multi-stage image build + compose stack)
+- [x] GitHub Actions CI pipeline (build + test on push/PR to `main`)
 
 ### Planned (In Order)
 1. Security (authentication/authorization)
 2. Deeper integration testing (e.g., Testcontainers)
-3. CI/CD pipeline
+3. CD pipeline (deployment/release automation)
 
 ## API Endpoints Reference
 
