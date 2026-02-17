@@ -11,6 +11,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.stream.Collectors;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 
@@ -22,6 +27,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/orders")
+@Tag(name = "Orders", description = "Operations for managing customer orders")
 public class OrderController {
 
     private final OrderService orderService;
@@ -42,6 +48,11 @@ public class OrderController {
      *
      * @return list of orders
      */
+    @Operation(
+        summary = "List all orders",
+        description = "Returns a list of all registered orders in the system"
+    )
+    @ApiResponse(responseCode = "200", description = "Orders retrieved successfully")
     @GetMapping
     public ResponseEntity<List<OrderResponse>> getAllOrders() {
         List<OrderResponse> orders = orderService
@@ -60,8 +71,18 @@ public class OrderController {
      * @param id order identifier
     * @return order if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
+    @Operation(
+        summary = "Get order by ID",
+        description = "Returns a single order by its unique identifier"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Order retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Order not found")
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<OrderResponse> getOrderById(
+            @Parameter(description = "Order identifier", example = "1")
+            @PathVariable Long id) {
         Order order = orderService
                 .getOrderById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Order", "id", id));
@@ -76,6 +97,14 @@ public class OrderController {
      * @param request DTO containing order data
      * @return created order with HTTP 201 status
      */
+    @Operation(
+        summary = "Create an order",
+        description = "Creates a new order and returns the created entity"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Order created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         Order createdOrder = orderService.createOrder(request);
@@ -91,8 +120,18 @@ public class OrderController {
      * @param request update data
      * @return updated order with HTTP 200 status
      */
+    @Operation(
+        summary = "Update an order",
+        description = "Updates an existing order. Only provided fields are updated."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Order updated successfully"),
+        @ApiResponse(responseCode = "404", description = "Order not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<OrderResponse> updateOrder(
+            @Parameter(description = "Order identifier", example = "1")
             @PathVariable Long id,
             @Valid @RequestBody UpdateOrderRequest request) {
         Order updatedOrder = orderService.updateOrder(id, request);
@@ -107,8 +146,18 @@ public class OrderController {
      * @param id order identifier
      * @return 204 No Content on success
      */
+    @Operation(
+        summary = "Delete an order",
+        description = "Permanently deletes an order from the system"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Order deleted successfully"),
+        @ApiResponse(responseCode = "404", description = "Order not found")
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteOrder(
+            @Parameter(description = "Order identifier", example = "1")
+            @PathVariable Long id) {
         orderService.deleteOrder(id);
         return ResponseEntity.noContent().build();
     }

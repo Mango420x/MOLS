@@ -11,6 +11,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.stream.Collectors;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 
@@ -22,6 +27,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/stocks")
+@Tag(name = "Stocks", description = "Operations for managing stock levels")
 public class StockController {
 
     private final StockService stockService;
@@ -42,6 +48,11 @@ public class StockController {
      *
      * @return list of stock records
      */
+    @Operation(
+        summary = "List all stocks",
+        description = "Returns a list of all registered stock records in the system"
+    )
+    @ApiResponse(responseCode = "200", description = "Stocks retrieved successfully")
     @GetMapping
     public ResponseEntity<List<StockResponse>> getAllStocks() {
         List<StockResponse> stocks = stockService
@@ -60,8 +71,18 @@ public class StockController {
      * @param id stock identifier
     * @return stock if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
+    @Operation(
+        summary = "Get stock by ID",
+        description = "Returns a single stock record by its unique identifier"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Stock retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Stock not found")
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<StockResponse> getStockById(@PathVariable Long id) {
+    public ResponseEntity<StockResponse> getStockById(
+            @Parameter(description = "Stock identifier", example = "1")
+            @PathVariable Long id) {
         Stock stock = stockService
                 .getStockById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Stock", "id", id));
@@ -76,6 +97,14 @@ public class StockController {
      * @param request DTO containing stock data
      * @return created stock with HTTP 201 status
      */
+    @Operation(
+        summary = "Create a stock",
+        description = "Creates a new stock record and returns the created entity"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Stock created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
     @PostMapping
     public ResponseEntity<StockResponse> createStock(@Valid @RequestBody CreateStockRequest request) {
         Stock createdStock = stockService.createStock(request);
@@ -91,8 +120,18 @@ public class StockController {
      * @param request update data
      * @return updated stock with HTTP 200 status
      */
+    @Operation(
+        summary = "Update a stock",
+        description = "Updates an existing stock record. Only provided fields are updated."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Stock updated successfully"),
+        @ApiResponse(responseCode = "404", description = "Stock not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<StockResponse> updateStock(
+            @Parameter(description = "Stock identifier", example = "1")
             @PathVariable Long id,
             @Valid @RequestBody UpdateStockRequest request) {
         Stock updatedStock = stockService.updateStock(id, request);
@@ -107,8 +146,18 @@ public class StockController {
      * @param id stock identifier
      * @return 204 No Content on success
      */
+    @Operation(
+        summary = "Delete a stock",
+        description = "Permanently deletes a stock record from the system"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Stock deleted successfully"),
+        @ApiResponse(responseCode = "404", description = "Stock not found")
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteStock(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteStock(
+            @Parameter(description = "Stock identifier", example = "1")
+            @PathVariable Long id) {
         stockService.deleteStock(id);
         return ResponseEntity.noContent().build();
     }

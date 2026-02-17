@@ -11,6 +11,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.stream.Collectors;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 
@@ -22,6 +27,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/resources")
+@Tag(name = "Resources", description = "Operations for managing catalog resources")
 public class ResourceController {
 
     private final ResourceService resourceService;
@@ -42,6 +48,11 @@ public class ResourceController {
      *
      * @return list of resources
      */
+    @Operation(
+        summary = "List all resources",
+        description = "Returns a list of all registered resources in the system"
+    )
+    @ApiResponse(responseCode = "200", description = "Resources retrieved successfully")
     @GetMapping
     public ResponseEntity<List<ResourceResponse>> getAllResources() {
         List<ResourceResponse> resources = resourceService
@@ -60,8 +71,18 @@ public class ResourceController {
      * @param id resource identifier
     * @return resource if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
+    @Operation(
+        summary = "Get resource by ID",
+        description = "Returns a single resource by its unique identifier"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Resource retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Resource not found")
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<ResourceResponse> getResourceById(@PathVariable Long id) {
+    public ResponseEntity<ResourceResponse> getResourceById(
+            @Parameter(description = "Resource identifier", example = "1")
+            @PathVariable Long id) {
         Resource resource = resourceService
                 .getResourceById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Resource", "id", id));
@@ -76,6 +97,14 @@ public class ResourceController {
      * @param request DTO containing resource data
      * @return created resource with HTTP 201 status
      */
+    @Operation(
+        summary = "Create a resource",
+        description = "Creates a new resource and returns the created entity"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Resource created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
     @PostMapping
     public ResponseEntity<ResourceResponse> createResource(@Valid @RequestBody CreateResourceRequest request) {
         Resource createdResource = resourceService.createResource(request);
@@ -91,8 +120,18 @@ public class ResourceController {
      * @param request update data
      * @return updated resource with HTTP 200 status
      */
+    @Operation(
+        summary = "Update a resource",
+        description = "Updates an existing resource. Only provided fields are updated."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Resource updated successfully"),
+        @ApiResponse(responseCode = "404", description = "Resource not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<ResourceResponse> updateResource(
+            @Parameter(description = "Resource identifier", example = "1")
             @PathVariable Long id,
             @Valid @RequestBody UpdateResourceRequest request) {
         Resource updatedResource = resourceService.updateResource(id, request);
@@ -107,8 +146,18 @@ public class ResourceController {
      * @param id resource identifier
      * @return 204 No Content on success
      */
+    @Operation(
+        summary = "Delete a resource",
+        description = "Permanently deletes a resource from the system"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Resource deleted successfully"),
+        @ApiResponse(responseCode = "404", description = "Resource not found")
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteResource(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteResource(
+            @Parameter(description = "Resource identifier", example = "1")
+            @PathVariable Long id) {
         resourceService.deleteResource(id);
         return ResponseEntity.noContent().build();
     }
