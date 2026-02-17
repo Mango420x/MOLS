@@ -1,65 +1,78 @@
 # MOLS – Multimodal Operative Logistic System
 
 **Short Description:**  
-Auditable web-based system for managing logistics across land, air, and sea, with complete stock and transport tracking. Designed for robustness, traceability, and real-world operational workflows.
+A web-based logistics system for tracking resources, stock, and transport across land, sea, and air. Built for clear workflows and full traceability.
 
 ---
 
 ## Overview
 
-MOLS is a web application that allows units (branches/sucursals) to request resources, manage warehouse stock, assign vehicles for transportation, and track shipments with full historical traceability.
+MOLS helps units request resources, warehouses manage stock, and teams coordinate shipments and vehicles. It keeps a complete history of what happened, when, and where.
 
-Supports multiple types of vehicles: TERRESTRIAL, MARITIME, and AERIAL.  
-Focuses on functional, industrial-grade workflows rather than flashy UI.
+This is a portfolio-grade backend project focused on clean structure, traceability, and real-world logistics workflows.
 
----
-
-## Key Features
-
-- **Unit & Order Management:** Create, validate, and track resource orders.  
-- **Warehouse & Stock Management:** Track stock levels, prevent negative inventory, and log movements.  
-- **Vehicle & Shipment Tracking:** Assign vehicles, track shipment status, and handle multimodal logistics.  
-- **Audit & History:** Complete traceability for all actions.  
+For deeper technical details, see [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md).
 
 ---
 
-## Technologies
+<details>
+<summary>Resumen en espanol (ES)</summary>
 
-- **Backend:** Java 17+, Spring Boot (REST API, Service Layer, Validation)  
-- **Database:** PostgreSQL (H2 for testing)  
-- **Frontend:** HTML, CSS, JavaScript (Fetch API)  
-- **Build & Tools:** Maven, Git, JUnit 5  
+MOLS es un proyecto de portfolio profesional que demuestra una arquitectura backend clara y mantenible para operaciones logisticas reales. Permite gestionar pedidos, stock, almacenes, vehiculos y envios, con trazabilidad completa de movimientos.
+
+La arquitectura se organiza en capas (API, servicios, datos y dominio), lo que facilita el mantenimiento, el testeo y la evolucion del sistema. Para mas detalle tecnico, consulta [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md).
+</details>
+
+---
+
+## Technologies (High-Level)
+
+MOLS is built as a modern backend-first system:
+
+- **Java + Spring Boot** provide the core REST API and service layer.
+- **PostgreSQL** stores operational data with strong consistency.
+- **Maven** manages builds and dependencies.
+
+These choices emphasize reliability, traceability, and long-term maintainability.
 
 ---
 
 ## Architecture
 
-Browser (UI: HTML/CSS/JS) -> Spring Boot REST API -> Service Layer (business logic) -> Domain Entities & Repositories (JPA/Hibernate) -> PostgreSQL Database
+MOLS follows a clean, layered architecture that separates responsibilities and keeps the system predictable:
 
-- Functional UI consumes API endpoints for managing units, orders, stock, vehicles, and shipments.  
-- Full audit trails and validations ensure a robust, industrial-grade system.
+- **API Layer**: REST controllers expose endpoints and handle HTTP concerns.
+- **Service Layer**: business rules and workflows live here.
+- **Data Layer**: repositories manage persistence and database access.
+- **Domain Model**: entities represent real-world logistics concepts.
+
+This structure keeps logic centralized, makes testing easier, and supports future growth.
+
+---
+
+## What You Can Do
+
+- Create and track orders from units
+- Manage warehouses and stock levels
+- Assign vehicles and follow shipments
+- Keep a full audit trail of movements
 
 ---
 
 ## Getting Started
 
-1. Clone the repository
+1. Clone the repository.
+2. Configure the database in `application.properties`.
+3. Run the application and open http://localhost:8080.
 
-       git clone https://github.com/Mango420x/MOLS.git
-
-2. Configure PostgreSQL in application.properties.
-
-3. Build and run the Spring Boot application
-
-        mvn clean install
-        mvn spring-boot:run
-
-4. Access the application opening your browser at http://localhost:8080
+---
 
 ## License
 
 This project is for educational and portfolio purposes.
 
+---
+
 ## Contributing
 
-Contributions welcome! Focus on backend robustness, frontend improvements, or additional logistic rules. Ensure all movements are audited and validated.
+Contributions are welcome. Focus on clearer workflows, better validation, and stronger testing.

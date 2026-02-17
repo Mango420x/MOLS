@@ -6,14 +6,14 @@
 - Portfolio-grade backend demonstrating clean architecture, strict layering, auditability, and deterministic behavior.
 
 ## Project Status
-- **Runtime**: Spring Boot 4.x application running on Java 21, connected to PostgreSQL database.
+- **Runtime**: Spring Boot 4.0.2 (Spring MVC) running on Java 21, connected to PostgreSQL.
 - **Codebase**: Java sources under `src/main/java/com/mls/logistics`.
 - **Entry Point**: `com.mls.logistics.LogisticsApplication`.
-- **Architecture**: Classic four-layer architecture strictly enforced (Controllers → Services → Repositories → Database).
-- **Database**: PostgreSQL 18.1 (`logistics_db` database, `logistics_user` credentials configured).
-- **API Status**: Full REST API implemented and operational at `http://localhost:8080/api/*`.
+- **Architecture**: Classic four-layer architecture (Controllers → Services → Repositories → Database) with DTOs and a global exception handler.
+- **Database**: PostgreSQL (`logistics_db` database, `logistics_user` credentials configured).
+- **API Status**: CRUD REST API implemented and operational at `http://localhost:8080/api/*` (GET/POST/PUT/DELETE with DTOs + validation).
 - **Build**: Maven wrapper present (`mvnw`, `mvnw.cmd`); build artifacts in `target/`.
-- **Testing**: Test structure exists under `src/test/java`; integration with H2 planned.
+- **Testing**: Basic Spring context test only; no H2/Testcontainers integration yet.
 
 ## What This Repository Contains
 
@@ -38,6 +38,8 @@ REST API endpoints exposing HTTP interfaces for all domain entities:
 - Constructor-based dependency injection
 - Proper HTTP status codes (200 OK, 201 Created, 404 Not Found)
 - Optional resolution at HTTP boundary
+- Uses request DTOs with `@Valid` validation
+- Exposes CRUD endpoints (GET, POST, PUT, DELETE)
 
 #### 2. **Service Layer** (`service/`)
 Business logic services for each domain entity. Services are the source of truth for all business operations.
@@ -46,12 +48,15 @@ Business logic services for each domain entity. Services are the source of truth
 - `getAll{Entity}()` — retrieves all records
 - `get{Entity}ById(Long id)` — returns `Optional<Entity>`
 - `create{Entity}(Entity entity)` — creates new record
+- `create{Entity}(Create{Entity}Request request)` — creates from DTO
+- `update{Entity}(Long id, Update{Entity}Request request)` — updates from DTO
+- `delete{Entity}(Long id)` — deletes by id
 
 **Service Classes**:
 - `WarehouseService`, `UnitService`, `ResourceService`, `StockService`
 - `OrderService`, `OrderItemService`, `VehicleService`, `ShipmentService`, `MovementService`
 
-**Note**: `@Transactional` boundaries planned for future implementation.
+**Note**: `@Transactional` boundaries are implemented with read-only defaults.
 
 #### 3. **Repository Layer** (`repository/`)
 Spring Data JPA repositories handling only persistence operations.
@@ -63,10 +68,21 @@ JPA entities representing the core business model. All entities exist and are ma
 - `Unit`, `Warehouse`, `Resource`, `Stock`
 - `Order`, `OrderItem`, `Vehicle`, `Shipment`, `Movement`
 
+#### 5. **DTO Layer** (`dto/`)
+Request/response DTOs define API contracts:
+- Request DTOs for create/update operations (validation annotations included)
+- Response DTOs for API output mapping
+
+#### 6. **Exception Layer** (`exception/`)
+Global error handling and standardized error responses:
+- `GlobalExceptionHandler` with 400/404/500 handling
+- `ErrorResponse`, `ResourceNotFoundException`, `InvalidRequestException`
+
 ### Configuration
 - **Database**: PostgreSQL configured in `src/main/resources/application.properties`
 - **Credentials**: Hardcoded for development (no environment variables yet)
 - **Hibernate**: `ddl-auto=update` — auto-creates schema on startup
+- **SQL Logging**: `spring.jpa.show-sql=true`
 - **Port**: Application runs on `8080`
 
 ## Where to Start (For a New Developer)
@@ -200,34 +216,34 @@ src/main/java/com/mls/logistics/
 - [x] Controller layer (all 9 controllers)
 - [x] PostgreSQL database configuration
 - [x] Hibernate schema auto-generation
-- [x] Basic REST API (GET all, GET by ID, POST create)
+- [x] CRUD REST API (GET, POST, PUT, DELETE)
+- [x] DTOs for request/response contracts
+- [x] Global exception handling (`@RestControllerAdvice`)
+- [x] Input validation (`@Valid`, Bean Validation)
+- [x] Transactional boundaries (`@Transactional`)
 
 ### 🚧 Planned (In Order)
-1. Global exception handling (`@ControllerAdvice`)
-2. DTOs for POST requests
-3. Transactional boundaries (`@Transactional`)
-4. Input validation (`@Valid`, Bean Validation)
-5. Additional CRUD operations (PUT, DELETE)
-6. Security (authentication/authorization)
-7. Comprehensive testing (unit + integration)
-8. Dockerization
-9. CI/CD pipeline
+1. Enforce domain business rules (stock, order/stock constraints, movement audit)
+2. Security (authentication/authorization)
+3. Comprehensive testing (unit + integration)
+4. Dockerization
+5. CI/CD pipeline
 
 ## API Endpoints Reference
 
 All endpoints follow RESTful conventions:
 
-| Entity | Base Path | GET All | GET by ID | POST Create |
-|--------|-----------|---------|-----------|-------------|
-| Warehouse | `/api/warehouses` | ✅ | ✅ | ✅ |
-| Unit | `/api/units` | ✅ | ✅ | ✅ |
-| Resource | `/api/resources` | ✅ | ✅ | ✅ |
-| Stock | `/api/stocks` | ✅ | ✅ | ✅ |
-| Order | `/api/orders` | ✅ | ✅ | ✅ |
-| OrderItem | `/api/order-items` | ✅ | ✅ | ✅ |
-| Vehicle | `/api/vehicles` | ✅ | ✅ | ✅ |
-| Shipment | `/api/shipments` | ✅ | ✅ | ✅ |
-| Movement | `/api/movements` | ✅ | ✅ | ✅ |
+| Entity | Base Path | GET All | GET by ID | POST Create | PUT Update | DELETE |
+|--------|-----------|---------|-----------|-------------|------------|--------|
+| Warehouse | `/api/warehouses` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Unit | `/api/units` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Resource | `/api/resources` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Stock | `/api/stocks` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Order | `/api/orders` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| OrderItem | `/api/order-items` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Vehicle | `/api/vehicles` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Shipment | `/api/shipments` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Movement | `/api/movements` | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ## Troubleshooting
 
@@ -255,9 +271,11 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 ## Technology Stack
 
 - **Language**: Java 21
-- **Framework**: Spring Boot 4.0.2
-- **Database**: PostgreSQL 18.1
-- **ORM**: Hibernate 7.2.1 (JPA)
+- **Framework**: Spring Boot 4.0.2 (Spring MVC, Spring Data JPA)
+- **Validation**: Spring Boot Starter Validation (Bean Validation)
+- **Observability**: Spring Boot Actuator
+- **Database**: PostgreSQL
+- **ORM**: Hibernate (JPA)
 - **Build Tool**: Maven 3.x (wrapper included)
 - **IDE**: VS Code (NOT IntelliJ)
 - **OS**: Windows 11
@@ -269,8 +287,8 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 - **Documentation**: `README.md`, `PROJECT_CONTEXT.md`
 - **Recommended Actions**:
   - Test all API endpoints with Postman/cURL
-  - Implement exception handling layer
-  - Add DTOs to separate API contracts from domain model
-  - Write controller tests
+   - Enforce core business rules in services
+   - Add unit/integration tests (controller + service + repository)
+   - Review validation rules for all request DTOs
 
-**Last updated**: 2026-02-13
+**Last updated**: 2026-02-17
