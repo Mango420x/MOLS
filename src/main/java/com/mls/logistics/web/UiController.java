@@ -50,17 +50,19 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 
-@Controller
-@RequestMapping
 /**
  * Thymeleaf UI controller for the admin web interface.
  *
- * Responsibilities:
- * - Serve server-rendered pages under /ui/**
- * - Provide admin-friendly validation and flash messages
- * - Delegate all business logic to services (no direct repository access)
- * - Support server-side sorting for list tables
+ * <p>Responsibilities:</p>
+ * <ul>
+ *     <li>Serve server-rendered pages under {@code /ui/**}</li>
+ *     <li>Provide admin-friendly validation and flash messages</li>
+ *     <li>Delegate all business logic to services (no direct repository access)</li>
+ *     <li>Support server-side sorting for list tables</li>
+ * </ul>
  */
+@Controller
+@RequestMapping
 public class UiController {
 
     private static final String SESSION_ORDER_DRAFT_ITEMS = "orderDraftItems";
@@ -96,11 +98,19 @@ public class UiController {
         this.movementService = movementService;
     }
 
+    /**
+     * Root route.
+     *
+     * <p>Redirects to the dashboard under {@code /ui}.</p>
+     */
     @GetMapping("/")
     public String root() {
         return "redirect:/ui";
     }
 
+    /**
+     * Dashboard landing page.
+     */
     @GetMapping("/ui")
     public String dashboard(Model model) {
         model.addAttribute("warehouseCount", safeCount(() -> warehouseService.getAllWarehouses().size(), model));
@@ -110,6 +120,9 @@ public class UiController {
         return "ui/dashboard";
     }
 
+    /**
+     * Warehouses list page.
+     */
     @GetMapping("/ui/warehouses")
     public String warehouses(
             @RequestParam(value = "sort", required = false) String sort,
@@ -135,6 +148,9 @@ public class UiController {
         return "ui/warehouses";
     }
 
+    /**
+     * Resources list page.
+     */
     @GetMapping("/ui/resources")
     public String resources(
             @RequestParam(value = "sort", required = false) String sort,
@@ -161,6 +177,9 @@ public class UiController {
         return "ui/resources";
     }
 
+    /**
+     * Resource create form.
+     */
     @GetMapping("/ui/resources/new")
     public String newResource(Model model) {
         if (!model.containsAttribute("resourceForm")) {
@@ -169,6 +188,10 @@ public class UiController {
         model.addAttribute("formMode", "create");
         return "ui/resource-form";
     }
+
+    /**
+     * Create resource action.
+     */
     @PostMapping("/ui/resources")
     public String createResource(
             @Valid @ModelAttribute("resourceForm") CreateResourceRequest form,
@@ -192,169 +215,227 @@ public class UiController {
         }
     }
 
+    /**
+     * Shipments list page.
+     */
+    @GetMapping("/ui/shipments")
+    public String shipments(
+            @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "dir", required = false) String dir,
+            Model model) {
 
-                @GetMapping("/ui/shipments")
-                public String shipments(
-                        @RequestParam(value = "sort", required = false) String sort,
-                        @RequestParam(value = "dir", required = false) String dir,
-                        Model model) {
+        String sortKey = (sort == null || sort.isBlank()) ? "id" : sort.trim().toLowerCase();
+        String dirValue = (dir == null || dir.isBlank()) ? "asc" : dir.trim().toLowerCase();
+        Sort.Direction direction = "desc".equals(dirValue) ? Sort.Direction.DESC : Sort.Direction.ASC;
 
-                    String sortKey = (sort == null || sort.isBlank()) ? "id" : sort.trim().toLowerCase();
-                    String dirValue = (dir == null || dir.isBlank()) ? "asc" : dir.trim().toLowerCase();
-                    Sort.Direction direction = "desc".equals(dirValue) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        String property = switch (sortKey) {
+            case "id" -> "id";
+            case "order" -> "order.id";
+            case "vehicle" -> "vehicle.id";
+            case "warehouse" -> "warehouse.id";
+            case "status" -> "status";
+            default -> "id";
+        };
 
-                    String property = switch (sortKey) {
-                        case "id" -> "id";
-                        case "order" -> "order.id";
-                        case "vehicle" -> "vehicle.id";
-                        case "warehouse" -> "warehouse.id";
-                        case "status" -> "status";
-                        default -> "id";
-                    };
+        Sort sorting = Sort.by(direction, property).and(Sort.by(Sort.Direction.ASC, "id"));
+        model.addAttribute("sortKey", sortKey);
+        model.addAttribute("sortDir", direction == Sort.Direction.ASC ? "asc" : "desc");
 
-                    Sort sorting = Sort.by(direction, property).and(Sort.by(Sort.Direction.ASC, "id"));
-                    model.addAttribute("sortKey", sortKey);
-                    model.addAttribute("sortDir", direction == Sort.Direction.ASC ? "asc" : "desc");
+        model.addAttribute("shipments", safeList(() -> shipmentService.getAllShipments(sorting), model));
+        return "ui/shipments";
+    }
 
-                    model.addAttribute("shipments", safeList(() -> shipmentService.getAllShipments(sorting), model));
-                    return "ui/shipments";
+    /**
+     * Shipment detail page (traceability view).
+     */
+    @GetMapping("/ui/shipments/{id}")
+    public String shipmentDetail(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            var shipment = shipmentService.getShipmentById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Shipment", "id", id));
+
+            Sort itemSort = Sort.by(Sort.Direction.ASC, "id");
+            Sort movementSort = Sort.by(Sort.Direction.DESC, "dateTime").and(Sort.by(Sort.Direction.DESC, "id"));
+
+            model.addAttribute("shipment", shipment);
+
+            Long orderId = shipment.getOrder() != null ? shipment.getOrder().getId() : null;
+            if (orderId != null) {
+                model.addAttribute("items", safeList(() -> orderItemService.getOrderItemsByOrderId(orderId, itemSort), model));
+            } else {
+                model.addAttribute("items", List.of());
+            }
+
+            model.addAttribute("movements", safeList(() -> movementService.getMovementsByShipmentId(id, movementSort), model));
+            return "ui/shipment-detail";
+        } catch (ResourceNotFoundException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Shipment not found.");
+            return "redirect:/ui/shipments";
+        } catch (DataAccessException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "We couldn't load this information right now. Please try again.");
+            return "redirect:/ui/shipments";
+        }
+    }
+
+    /**
+     * Shipment create form.
+     */
+    @GetMapping("/ui/shipments/new")
+    public String newShipment(Model model) {
+        if (!model.containsAttribute("shipmentForm")) {
+            model.addAttribute("shipmentForm", new CreateShipmentRequest());
+        }
+        populateShipmentReferenceData(model);
+        model.addAttribute("formMode", "create");
+        return "ui/shipment-form";
+    }
+
+    /**
+     * Create shipment action.
+     */
+    @PostMapping("/ui/shipments")
+    public String createShipment(
+            @Valid @ModelAttribute("shipmentForm") CreateShipmentRequest form,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes,
+            Model model) {
+
+        if (bindingResult.hasErrors()) {
+            populateShipmentReferenceData(model);
+            model.addAttribute("formMode", "create");
+            return "ui/shipment-form";
+        }
+
+        try {
+            shipmentService.createShipment(form);
+            redirectAttributes.addFlashAttribute("successMessage", "Shipment created successfully.");
+            return "redirect:/ui/shipments";
+        } catch (DataIntegrityViolationException ex) {
+            populateShipmentReferenceData(model);
+            model.addAttribute("formMode", "create");
+            model.addAttribute("errorMessage", "Please verify the selected order, vehicle, and warehouse.");
+            return "ui/shipment-form";
+        } catch (DataAccessException ex) {
+            populateShipmentReferenceData(model);
+            model.addAttribute("formMode", "create");
+            model.addAttribute("errorMessage", "We couldn't save your changes right now. Please try again.");
+            return "ui/shipment-form";
+        }
+    }
+
+    /**
+     * Shipment edit form.
+     */
+    @GetMapping("/ui/shipments/{id}/edit")
+    public String editShipment(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            var shipment = shipmentService.getShipmentById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Shipment", "id", id));
+
+            if (!model.containsAttribute("shipmentForm")) {
+                CreateShipmentRequest form = new CreateShipmentRequest();
+                if (shipment.getOrder() != null) {
+                    form.setOrderId(shipment.getOrder().getId());
                 }
-
-                @GetMapping("/ui/shipments/new")
-                public String newShipment(Model model) {
-                    if (!model.containsAttribute("shipmentForm")) {
-                        model.addAttribute("shipmentForm", new CreateShipmentRequest());
-                    }
-                    populateShipmentReferenceData(model);
-                    model.addAttribute("formMode", "create");
-                    return "ui/shipment-form";
+                if (shipment.getVehicle() != null) {
+                    form.setVehicleId(shipment.getVehicle().getId());
                 }
-
-                @PostMapping("/ui/shipments")
-                public String createShipment(
-                        @Valid @ModelAttribute("shipmentForm") CreateShipmentRequest form,
-                        BindingResult bindingResult,
-                        RedirectAttributes redirectAttributes,
-                        Model model) {
-
-                    if (bindingResult.hasErrors()) {
-                        populateShipmentReferenceData(model);
-                        model.addAttribute("formMode", "create");
-                        return "ui/shipment-form";
-                    }
-
-                    try {
-                        shipmentService.createShipment(form);
-                        redirectAttributes.addFlashAttribute("successMessage", "Shipment created successfully.");
-                        return "redirect:/ui/shipments";
-                    } catch (DataIntegrityViolationException ex) {
-                        populateShipmentReferenceData(model);
-                        model.addAttribute("formMode", "create");
-                        model.addAttribute("errorMessage", "Please verify the selected order, vehicle, and warehouse.");
-                        return "ui/shipment-form";
-                    } catch (DataAccessException ex) {
-                        populateShipmentReferenceData(model);
-                        model.addAttribute("formMode", "create");
-                        model.addAttribute("errorMessage", "We couldn't save your changes right now. Please try again.");
-                        return "ui/shipment-form";
-                    }
+                if (shipment.getWarehouse() != null) {
+                    form.setWarehouseId(shipment.getWarehouse().getId());
                 }
+                form.setStatus(shipment.getStatus());
+                model.addAttribute("shipmentForm", form);
+            }
 
-                @GetMapping("/ui/shipments/{id}/edit")
-                public String editShipment(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
-                    try {
-                        var shipment = shipmentService.getShipmentById(id)
-                                .orElseThrow(() -> new ResourceNotFoundException("Shipment", "id", id));
+            populateShipmentReferenceData(model);
+            model.addAttribute("shipmentId", id);
+            model.addAttribute("formMode", "edit");
+            return "ui/shipment-form";
+        } catch (ResourceNotFoundException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Shipment not found.");
+            return "redirect:/ui/shipments";
+        } catch (DataAccessException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "We couldn't load this information right now. Please try again.");
+            return "redirect:/ui/shipments";
+        }
+    }
 
-                        if (!model.containsAttribute("shipmentForm")) {
-                            CreateShipmentRequest form = new CreateShipmentRequest();
-                            if (shipment.getOrder() != null) {
-                                form.setOrderId(shipment.getOrder().getId());
-                            }
-                            if (shipment.getVehicle() != null) {
-                                form.setVehicleId(shipment.getVehicle().getId());
-                            }
-                            if (shipment.getWarehouse() != null) {
-                                form.setWarehouseId(shipment.getWarehouse().getId());
-                            }
-                            form.setStatus(shipment.getStatus());
-                            model.addAttribute("shipmentForm", form);
-                        }
+    /**
+     * Update shipment action.
+     *
+     * <p>If the status transitions to {@code DELIVERED}, fulfillment may occur and can fail with
+     * {@link InsufficientStockException}.</p>
+     */
+    @PostMapping("/ui/shipments/{id}")
+    public String updateShipment(
+            @PathVariable Long id,
+            @Valid @ModelAttribute("shipmentForm") CreateShipmentRequest form,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes,
+            Model model) {
 
-                        populateShipmentReferenceData(model);
-                        model.addAttribute("shipmentId", id);
-                        model.addAttribute("formMode", "edit");
-                        return "ui/shipment-form";
-                    } catch (ResourceNotFoundException ex) {
-                        redirectAttributes.addFlashAttribute("errorMessage", "Shipment not found.");
-                        return "redirect:/ui/shipments";
-                    } catch (DataAccessException ex) {
-                        redirectAttributes.addFlashAttribute("errorMessage", "We couldn't load this information right now. Please try again.");
-                        return "redirect:/ui/shipments";
-                    }
-                }
+        if (bindingResult.hasErrors()) {
+            populateShipmentReferenceData(model);
+            model.addAttribute("shipmentId", id);
+            model.addAttribute("formMode", "edit");
+            return "ui/shipment-form";
+        }
 
-                @PostMapping("/ui/shipments/{id}")
-                public String updateShipment(
-                        @PathVariable Long id,
-                        @Valid @ModelAttribute("shipmentForm") CreateShipmentRequest form,
-                        BindingResult bindingResult,
-                        RedirectAttributes redirectAttributes,
-                        Model model) {
+        try {
+            UpdateShipmentRequest request = new UpdateShipmentRequest();
+            request.setOrderId(form.getOrderId());
+            request.setVehicleId(form.getVehicleId());
+            request.setWarehouseId(form.getWarehouseId());
+            request.setStatus(form.getStatus());
 
-                    if (bindingResult.hasErrors()) {
-                        populateShipmentReferenceData(model);
-                        model.addAttribute("shipmentId", id);
-                        model.addAttribute("formMode", "edit");
-                        return "ui/shipment-form";
-                    }
+            shipmentService.updateShipment(id, request);
+            redirectAttributes.addFlashAttribute("successMessage", "Shipment updated successfully.");
+            return "redirect:/ui/shipments";
+        } catch (ResourceNotFoundException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Shipment not found.");
+            return "redirect:/ui/shipments";
+        } catch (InsufficientStockException | InvalidRequestException ex) {
+            populateShipmentReferenceData(model);
+            model.addAttribute("shipmentId", id);
+            model.addAttribute("formMode", "edit");
+            model.addAttribute("errorMessage", ex.getMessage());
+            return "ui/shipment-form";
+        } catch (DataIntegrityViolationException ex) {
+            populateShipmentReferenceData(model);
+            model.addAttribute("shipmentId", id);
+            model.addAttribute("formMode", "edit");
+            model.addAttribute("errorMessage", "Please verify the selected order, vehicle, and warehouse.");
+            return "ui/shipment-form";
+        } catch (DataAccessException ex) {
+            populateShipmentReferenceData(model);
+            model.addAttribute("shipmentId", id);
+            model.addAttribute("formMode", "edit");
+            model.addAttribute("errorMessage", "We couldn't save your changes right now. Please try again.");
+            return "ui/shipment-form";
+        }
+    }
 
-                    try {
-                        UpdateShipmentRequest request = new UpdateShipmentRequest();
-                        request.setOrderId(form.getOrderId());
-                        request.setVehicleId(form.getVehicleId());
-                        request.setWarehouseId(form.getWarehouseId());
-                        request.setStatus(form.getStatus());
+    /**
+     * Delete shipment action.
+     */
+    @PostMapping("/ui/shipments/{id}/delete")
+    public String deleteShipment(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            shipmentService.deleteShipment(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Shipment deleted successfully.");
+        } catch (DataIntegrityViolationException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "This shipment is in use and cannot be deleted.");
+        } catch (DataAccessException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "We couldn't complete that action right now. Please try again.");
+        }
+        return "redirect:/ui/shipments";
+    }
 
-                        shipmentService.updateShipment(id, request);
-                        redirectAttributes.addFlashAttribute("successMessage", "Shipment updated successfully.");
-                        return "redirect:/ui/shipments";
-                    } catch (ResourceNotFoundException ex) {
-                        redirectAttributes.addFlashAttribute("errorMessage", "Shipment not found.");
-                        return "redirect:/ui/shipments";
-                    } catch (InsufficientStockException | InvalidRequestException ex) {
-                        populateShipmentReferenceData(model);
-                        model.addAttribute("shipmentId", id);
-                        model.addAttribute("formMode", "edit");
-                        model.addAttribute("errorMessage", ex.getMessage());
-                        return "ui/shipment-form";
-                    } catch (DataIntegrityViolationException ex) {
-                        populateShipmentReferenceData(model);
-                        model.addAttribute("shipmentId", id);
-                        model.addAttribute("formMode", "edit");
-                        model.addAttribute("errorMessage", "Please verify the selected order, vehicle, and warehouse.");
-                        return "ui/shipment-form";
-                    } catch (DataAccessException ex) {
-                        populateShipmentReferenceData(model);
-                        model.addAttribute("shipmentId", id);
-                        model.addAttribute("formMode", "edit");
-                        model.addAttribute("errorMessage", "We couldn't save your changes right now. Please try again.");
-                        return "ui/shipment-form";
-                    }
-                }
-
-                @PostMapping("/ui/shipments/{id}/delete")
-                public String deleteShipment(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-                    try {
-                        shipmentService.deleteShipment(id);
-                        redirectAttributes.addFlashAttribute("successMessage", "Shipment deleted successfully.");
-                    } catch (DataIntegrityViolationException ex) {
-                        redirectAttributes.addFlashAttribute("errorMessage", "This shipment is in use and cannot be deleted.");
-                    } catch (DataAccessException ex) {
-                        redirectAttributes.addFlashAttribute("errorMessage", "We couldn't complete that action right now. Please try again.");
-                    }
-                    return "redirect:/ui/shipments";
-                }
+    /**
+     * Resource edit form.
+     *
+     * @param id resource identifier
+     */
     @GetMapping("/ui/resources/{id}/edit")
     public String editResource(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         try {
@@ -381,6 +462,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Update resource action.
+     *
+     * @param id resource identifier
+     */
     @PostMapping("/ui/resources/{id}")
     public String updateResource(
             @PathVariable Long id,
@@ -415,6 +501,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Delete resource action.
+     *
+     * @param id resource identifier
+     */
     @PostMapping("/ui/resources/{id}/delete")
     public String deleteResource(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
@@ -428,6 +519,9 @@ public class UiController {
         return "redirect:/ui/resources";
     }
 
+    /**
+     * Warehouse create form.
+     */
     @GetMapping("/ui/warehouses/new")
     public String newWarehouse(Model model) {
         if (!model.containsAttribute("warehouseForm")) {
@@ -437,6 +531,9 @@ public class UiController {
         return "ui/warehouse-form";
     }
 
+    /**
+     * Create warehouse action.
+     */
     @PostMapping("/ui/warehouses")
     public String createWarehouse(
             @Valid @ModelAttribute("warehouseForm") CreateWarehouseRequest form,
@@ -460,6 +557,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Warehouse edit form.
+     *
+     * @param id warehouse identifier
+     */
     @GetMapping("/ui/warehouses/{id}/edit")
     public String editWarehouse(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         try {
@@ -484,6 +586,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Update warehouse action.
+     *
+     * @param id warehouse identifier
+     */
     @PostMapping("/ui/warehouses/{id}")
     public String updateWarehouse(
             @PathVariable Long id,
@@ -517,6 +624,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Delete warehouse action.
+     *
+     * @param id warehouse identifier
+     */
     @PostMapping("/ui/warehouses/{id}/delete")
     public String deleteWarehouse(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
@@ -530,6 +642,9 @@ public class UiController {
         return "redirect:/ui/warehouses";
     }
 
+    /**
+     * Vehicles list page.
+     */
     @GetMapping("/ui/vehicles")
     public String vehicles(
             @RequestParam(value = "sort", required = false) String sort,
@@ -556,6 +671,9 @@ public class UiController {
         return "ui/vehicles";
     }
 
+    /**
+     * Vehicle create form.
+     */
     @GetMapping("/ui/vehicles/new")
     public String newVehicle(Model model) {
         if (!model.containsAttribute("vehicleForm")) {
@@ -565,6 +683,9 @@ public class UiController {
         return "ui/vehicle-form";
     }
 
+    /**
+     * Create vehicle action.
+     */
     @PostMapping("/ui/vehicles")
     public String createVehicle(
             @Valid @ModelAttribute("vehicleForm") CreateVehicleRequest form,
@@ -588,6 +709,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Vehicle edit form.
+     *
+     * @param id vehicle id
+     */
     @GetMapping("/ui/vehicles/{id}/edit")
     public String editVehicle(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         try {
@@ -614,6 +740,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Update an existing vehicle.
+     *
+     * @param id vehicle id
+     */
     @PostMapping("/ui/vehicles/{id}")
     public String updateVehicle(
             @PathVariable Long id,
@@ -648,6 +779,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Delete an existing vehicle.
+     *
+     * @param id vehicle id
+     */
     @PostMapping("/ui/vehicles/{id}/delete")
     public String deleteVehicle(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
@@ -661,6 +797,12 @@ public class UiController {
         return "redirect:/ui/vehicles";
     }
 
+    /**
+     * Orders list page.
+     *
+     * <p>Supports simple sorting via query parameters and also computes an in-memory map of
+     * items by order for the list view.</p>
+     */
     @GetMapping("/ui/orders")
     public String orders(
             @RequestParam(value = "sort", required = false) String sort,
@@ -708,6 +850,44 @@ public class UiController {
         return "ui/orders";
     }
 
+    /**
+     * Order detail page with traceability.
+     *
+     * <p>Displays the order header, its items, related shipments, and stock movements linked
+     * to the order (when available).</p>
+     *
+     * @param id order id
+     */
+    @GetMapping("/ui/orders/{id}")
+    public String orderDetail(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            var order = orderService.getOrderById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Order", "id", id));
+
+            Sort itemSort = Sort.by(Sort.Direction.ASC, "id");
+            Sort shipmentSort = Sort.by(Sort.Direction.DESC, "id");
+            Sort movementSort = Sort.by(Sort.Direction.DESC, "dateTime").and(Sort.by(Sort.Direction.DESC, "id"));
+
+            model.addAttribute("order", order);
+            model.addAttribute("items", safeList(() -> orderItemService.getOrderItemsByOrderId(id, itemSort), model));
+            model.addAttribute("shipments", safeList(() -> shipmentService.getShipmentsByOrderId(id, shipmentSort), model));
+            model.addAttribute("movements", safeList(() -> movementService.getMovementsByOrderId(id, movementSort), model));
+            return "ui/order-detail";
+        } catch (ResourceNotFoundException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Order not found.");
+            return "redirect:/ui/orders";
+        } catch (DataAccessException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "We couldn't load this information right now. Please try again.");
+            return "redirect:/ui/orders";
+        }
+    }
+
+    /**
+     * Order create form (draft mode).
+     *
+     * <p>This screen supports a simple “draft” experience: the order header and a list of
+     * draft items are kept in the HTTP session until the final create action is submitted.</p>
+     */
     @GetMapping("/ui/orders/new")
     public String newOrder(Model model, HttpSession session) {
         if (!model.containsAttribute("orderForm")) {
@@ -726,6 +906,12 @@ public class UiController {
         return "ui/order-form";
     }
 
+    /**
+     * Add an item to the in-session order draft.
+     *
+     * <p>Persists the current header into the session so the user doesn't lose changes when
+     * adding/removing draft items before final submission.</p>
+     */
     @PostMapping("/ui/orders/draft/items")
     public String addDraftOrderItem(
             @ModelAttribute("orderForm") CreateOrderRequest header,
@@ -768,6 +954,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Remove an item from the in-session order draft.
+     *
+     * @param index zero-based index in the draft list
+     */
     @PostMapping("/ui/orders/draft/items/{index}/remove")
     public String removeDraftOrderItem(
             @PathVariable int index,
@@ -784,6 +975,12 @@ public class UiController {
         return "redirect:/ui/orders/new";
     }
 
+    /**
+     * Create the order and its items.
+     *
+     * <p>Uses the items stored in the session draft. On success, clears the draft from the
+     * session.</p>
+     */
     @PostMapping("/ui/orders")
     public String createOrder(
             @Valid @ModelAttribute("orderForm") CreateOrderRequest form,
@@ -906,6 +1103,14 @@ public class UiController {
         model.addAttribute("draftItems", view);
     }
 
+    /**
+     * Order edit form.
+     *
+     * <p>Edits the order header and lists existing items. Items can be managed inline via
+     * dedicated endpoints on this controller.</p>
+     *
+     * @param id order id
+     */
     @GetMapping("/ui/orders/{id}/edit")
     public String editOrder(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         try {
@@ -940,6 +1145,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Update order header (unit/date/status).
+     *
+     * @param id order id
+     */
     @PostMapping("/ui/orders/{id}")
     public String updateOrder(
             @PathVariable Long id,
@@ -997,6 +1207,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Add a new item to an existing order from the edit screen.
+     *
+     * <p>This is separate from the “draft” create flow; it creates a persisted order item.</p>
+     */
     @PostMapping("/ui/orders/{orderId}/items/inline-add")
     public String addOrderItemInline(
             @PathVariable Long orderId,
@@ -1045,6 +1260,12 @@ public class UiController {
         return "redirect:/ui/orders/" + orderId + "/edit";
     }
 
+    /**
+     * Update an existing order item quantity from the edit screen.
+     *
+     * @param orderId order id (used for redirect and ownership check)
+     * @param itemId order item id
+     */
     @PostMapping("/ui/orders/{orderId}/items/{itemId}/inline-update")
     public String updateOrderItemInline(
             @PathVariable Long orderId,
@@ -1078,6 +1299,12 @@ public class UiController {
         return "redirect:/ui/orders/" + orderId + "/edit";
     }
 
+    /**
+     * Remove an order item from an existing order.
+     *
+     * @param orderId order id (used for redirect)
+     * @param itemId item id
+     */
     @PostMapping("/ui/orders/{orderId}/items/{itemId}/inline-delete")
     public String deleteOrderItemInline(
             @PathVariable Long orderId,
@@ -1098,6 +1325,11 @@ public class UiController {
         return "redirect:/ui/orders/" + orderId + "/edit";
     }
 
+    /**
+     * Delete an order.
+     *
+     * @param id order id
+     */
     @PostMapping("/ui/orders/{id}/delete")
     public String deleteOrder(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
@@ -1111,6 +1343,12 @@ public class UiController {
         return "redirect:/ui/orders";
     }
 
+    /**
+     * Movements list page.
+     *
+     * <p>Supports sorting via query parameters and uses safe accessors to avoid hard failures
+     * when the database is temporarily unavailable.</p>
+     */
     @GetMapping("/ui/movements")
     public String movements(
             @RequestParam(value = "sort", required = false) String sort,
@@ -1141,6 +1379,11 @@ public class UiController {
         return "ui/movements";
     }
 
+    /**
+     * Stocks list page.
+     *
+     * <p>Supports sorting via query parameters.</p>
+     */
     @GetMapping("/ui/stocks")
     public String stocks(
             @RequestParam(value = "sort", required = false) String sort,
@@ -1167,6 +1410,9 @@ public class UiController {
         return "ui/stocks";
     }
 
+    /**
+     * Stock create form.
+     */
     @GetMapping("/ui/stocks/new")
     public String newStock(Model model) {
         if (!model.containsAttribute("stockForm")) {
@@ -1177,6 +1423,12 @@ public class UiController {
         return "ui/stock-form";
     }
 
+    /**
+     * Create a new stock record.
+     *
+     * <p>Rejects duplicates (resource + warehouse) and directs users to the adjust action
+     * for existing records.</p>
+     */
     @PostMapping("/ui/stocks")
     public String createStock(
             @Valid @ModelAttribute("stockForm") CreateStockRequest form,
@@ -1216,6 +1468,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Stock adjust form.
+     *
+     * @param id stock id
+     */
     @GetMapping("/ui/stocks/{id}/adjust")
     public String adjustStockPage(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         try {
@@ -1236,6 +1493,13 @@ public class UiController {
         }
     }
 
+    /**
+     * Apply a stock adjustment (increase or decrease).
+     *
+     * <p>On a decrease, validates that stock cannot become negative.</p>
+     *
+     * @param id stock id
+     */
     @PostMapping("/ui/stocks/{id}/adjust")
     public String adjustStock(
             @PathVariable Long id,
@@ -1280,6 +1544,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Delete a stock record.
+     *
+     * @param id stock id
+     */
     @PostMapping("/ui/stocks/{id}/delete")
     public String deleteStock(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
@@ -1293,6 +1562,11 @@ public class UiController {
         return "redirect:/ui/stocks";
     }
 
+    /**
+     * Units list page.
+     *
+     * <p>Supports sorting via query parameters.</p>
+     */
     @GetMapping("/ui/units")
     public String units(
             @RequestParam(value = "sort", required = false) String sort,
@@ -1318,6 +1592,9 @@ public class UiController {
         return "ui/units";
     }
 
+    /**
+     * Unit create form.
+     */
     @GetMapping("/ui/units/new")
     public String newUnit(Model model) {
         if (!model.containsAttribute("unitForm")) {
@@ -1327,6 +1604,9 @@ public class UiController {
         return "ui/unit-form";
     }
 
+    /**
+     * Create unit action.
+     */
     @PostMapping("/ui/units")
     public String createUnit(
             @Valid @ModelAttribute("unitForm") CreateUnitRequest form,
@@ -1350,6 +1630,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Unit edit form.
+     *
+     * @param id unit id
+     */
     @GetMapping("/ui/units/{id}/edit")
     public String editUnit(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         try {
@@ -1374,6 +1659,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Update an existing unit.
+     *
+     * @param id unit id
+     */
     @PostMapping("/ui/units/{id}")
     public String updateUnit(
             @PathVariable Long id,
@@ -1407,6 +1697,11 @@ public class UiController {
         }
     }
 
+    /**
+     * Delete a unit.
+     *
+     * @param id unit id
+     */
     @PostMapping("/ui/units/{id}/delete")
     public String deleteUnit(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {

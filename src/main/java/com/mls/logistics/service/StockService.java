@@ -113,7 +113,7 @@ public class StockService {
 
         // Rule 2: if initial quantity > 0, record an ENTRY movement
         if (request.getQuantity() > 0) {
-            recordMovement(savedStock, "ENTRY", request.getQuantity());
+            recordMovement(savedStock, "ENTRY", request.getQuantity(), null, null, null);
         }
 
         return savedStock;
@@ -168,7 +168,7 @@ public class StockService {
 
         // Rule 2: record movement automatically
         String movementType = delta > 0 ? "ENTRY" : "EXIT";
-        recordMovement(savedStock, movementType, Math.abs(delta));
+        recordMovement(savedStock, movementType, Math.abs(delta), request.getReason(), request.getOrderId(), request.getShipmentId());
 
         return savedStock;
     }
@@ -213,12 +213,20 @@ public class StockService {
      * @param type     movement type: ENTRY or EXIT
      * @param quantity absolute quantity affected (always positive)
      */
-    private void recordMovement(Stock stock, String type, int quantity) {
+    private void recordMovement(Stock stock,
+                                String type,
+                                int quantity,
+                                String reason,
+                                Long orderId,
+                                Long shipmentId) {
         Movement movement = new Movement();
         movement.setStock(stock);
         movement.setType(type);
         movement.setQuantity(quantity);
         movement.setDateTime(LocalDateTime.now());
+        movement.setReason(reason);
+        movement.setOrderId(orderId);
+        movement.setShipmentId(shipmentId);
         movementRepository.save(movement);
     }
 }

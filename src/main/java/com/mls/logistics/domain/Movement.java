@@ -28,6 +28,18 @@ public class Movement {
     /** Timestamp of the movement */
     private LocalDateTime dateTime;
 
+    /** Optional: order identifier that caused this movement (for traceability) */
+    @Column(name = "order_id")
+    private Long orderId;
+
+    /** Optional: shipment identifier that caused this movement (for traceability) */
+    @Column(name = "shipment_id")
+    private Long shipmentId;
+
+    /** Optional: short reason label (e.g., 'Shipment delivered') */
+    @Column(name = "reason", length = 200)
+    private String reason;
+
     // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -43,4 +55,13 @@ public class Movement {
 
     public LocalDateTime getDateTime() { return dateTime; }
     public void setDateTime(LocalDateTime dateTime) { this.dateTime = dateTime; }
+
+    public Long getOrderId() { return orderId; }
+    public void setOrderId(Long orderId) { this.orderId = orderId; }
+
+    public Long getShipmentId() { return shipmentId; }
+    public void setShipmentId(Long shipmentId) { this.shipmentId = shipmentId; }
+
+    public String getReason() { return reason; }
+    public void setReason(String reason) { this.reason = reason; }
 }

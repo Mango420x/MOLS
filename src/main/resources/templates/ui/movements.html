@@ -16,7 +16,7 @@
                 </div>
             </div>
 
-            <div class="alert alert-warning" th:if="${dataError != null}" th:text="${dataError}"></div>
+            <div th:replace="~{fragments/alerts :: alerts}"></div>
 
             <div class="card shadow-sm border-0">
                 <div class="table-responsive">
@@ -71,11 +71,14 @@
                                        th:classappend="${sortKey == 'stock' ? (sortDir == 'asc' ? ' bi-sort-up' : ' bi-sort-down') : ' bi-arrow-down-up'}"></i>
                                 </a>
                             </th>
+                            <th>Reason</th>
+                            <th class="text-end">Order</th>
+                            <th class="text-end">Shipment</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:if="${#lists.isEmpty(movements)}">
-                            <td colspan="6" class="text-center text-secondary py-4">No audit entries to display.</td>
+                            <td colspan="9" class="text-center text-secondary py-4">No audit entries to display.</td>
                         </tr>
                         <tr th:each="movement : ${movements}">
                             <td>
@@ -106,6 +109,9 @@
                                      th:text="${movement.stock != null && movement.stock.warehouse != null ? movement.stock.warehouse.location : '-'}"></div>
                             </td>
                             <td class="text-end" th:text="${movement.stock != null ? movement.stock.id : '-'}"></td>
+                            <td th:text="${movement.reason != null ? movement.reason : '-'}"></td>
+                            <td class="text-end" th:text="${movement.orderId != null ? movement.orderId : '-'}"></td>
+                            <td class="text-end" th:text="${movement.shipmentId != null ? movement.shipmentId : '-'}"></td>
                         </tr>
                         </tbody>
                     </table>

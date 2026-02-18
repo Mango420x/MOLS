@@ -48,6 +48,20 @@ public class MovementService {
     }
 
     /**
+     * Returns movement entries linked to a specific order.
+     */
+    public List<Movement> getMovementsByOrderId(Long orderId, Sort sort) {
+        return movementRepository.findByOrderId(orderId, sort);
+    }
+
+    /**
+     * Returns movement entries linked to a specific shipment.
+     */
+    public List<Movement> getMovementsByShipmentId(Long shipmentId, Sort sort) {
+        return movementRepository.findByShipmentId(shipmentId, sort);
+    }
+
+    /**
      * Retrieves a movement by its identifier.
      */
     public Optional<Movement> getMovementById(Long id) {
@@ -86,6 +100,9 @@ public class MovementService {
         movement.setType(request.getType());
         movement.setQuantity(request.getQuantity());
         movement.setDateTime(request.getDateTime());
+        movement.setOrderId(request.getOrderId());
+        movement.setShipmentId(request.getShipmentId());
+        movement.setReason(request.getReason());
 
         return movementRepository.save(movement);
     }
@@ -119,6 +136,15 @@ public class MovementService {
         }
         if (request.getDateTime() != null) {
             movement.setDateTime(request.getDateTime());
+        }
+        if (request.getOrderId() != null) {
+            movement.setOrderId(request.getOrderId());
+        }
+        if (request.getShipmentId() != null) {
+            movement.setShipmentId(request.getShipmentId());
+        }
+        if (request.getReason() != null) {
+            movement.setReason(request.getReason());
         }
 
         return movementRepository.save(movement);

@@ -17,6 +17,10 @@ public class MovementResponse {
     private int quantity;
     private LocalDateTime dateTime;
 
+    private Long orderId;
+    private Long shipmentId;
+    private String reason;
+
     /**
      * Default constructor for serialization.
      */
@@ -32,12 +36,22 @@ public class MovementResponse {
      * @param quantity quantity affected
      * @param dateTime movement timestamp
      */
-    public MovementResponse(Long id, Long stockId, String type, int quantity, LocalDateTime dateTime) {
+    public MovementResponse(Long id,
+                            Long stockId,
+                            String type,
+                            int quantity,
+                            LocalDateTime dateTime,
+                            Long orderId,
+                            Long shipmentId,
+                            String reason) {
         this.id = id;
         this.stockId = stockId;
         this.type = type;
         this.quantity = quantity;
         this.dateTime = dateTime;
+        this.orderId = orderId;
+        this.shipmentId = shipmentId;
+        this.reason = reason;
     }
 
     /**
@@ -55,7 +69,10 @@ public class MovementResponse {
                 movement.getStock().getId(),
                 movement.getType(),
                 movement.getQuantity(),
-                movement.getDateTime()
+                movement.getDateTime(),
+                movement.getOrderId(),
+                movement.getShipmentId(),
+                movement.getReason()
         );
     }
 
@@ -99,5 +116,29 @@ public class MovementResponse {
 
     public void setDateTime(LocalDateTime dateTime) {
         this.dateTime = dateTime;
+    }
+
+    public Long getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
+    }
+
+    public Long getShipmentId() {
+        return shipmentId;
+    }
+
+    public void setShipmentId(Long shipmentId) {
+        this.shipmentId = shipmentId;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 }

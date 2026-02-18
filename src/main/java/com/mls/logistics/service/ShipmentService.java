@@ -91,6 +91,13 @@ public class ShipmentService {
     }
 
     /**
+     * Lists shipments associated with a given order.
+     */
+    public List<Shipment> getShipmentsByOrderId(Long orderId, Sort sort) {
+        return shipmentRepository.findByOrderId(orderId, sort);
+    }
+
+    /**
      * Creates a new shipment.
      *
      * <p>If the shipment is created with status {@code DELIVERED}, fulfillment is executed immediately.</p>
@@ -247,6 +254,7 @@ public class ShipmentService {
 
         Long orderId = shipment.getOrder().getId();
         Long warehouseId = shipment.getWarehouse().getId();
+        Long shipmentId = shipment.getId();
 
         Sort itemSort = Sort.by(Sort.Direction.ASC, "id");
         List<OrderItem> items = orderItemService.getOrderItemsByOrderId(orderId, itemSort);
@@ -274,7 +282,15 @@ public class ShipmentService {
                                     ". Cannot deliver shipment id: " + shipment.getId()
                     ));
 
-            stockService.adjustStock(stock.getId(), new AdjustStockRequest(-quantity));
+                stockService.adjustStock(
+                    stock.getId(),
+                    new AdjustStockRequest(
+                        -quantity,
+                        "Shipment delivered",
+                        orderId,
+                        shipmentId
+                    )
+                );
         }
     }
 

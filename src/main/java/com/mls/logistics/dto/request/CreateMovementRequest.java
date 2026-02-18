@@ -29,6 +29,13 @@ public class CreateMovementRequest {
     @NotNull(message = "Movement date and time are required")
     private LocalDateTime dateTime;
 
+    private Long orderId;
+
+    private Long shipmentId;
+
+    @Size(max = 200, message = "Reason must be at most 200 characters")
+    private String reason;
+
     /**
      * Default constructor for deserialization.
      */
@@ -82,5 +89,29 @@ public class CreateMovementRequest {
 
     public void setDateTime(LocalDateTime dateTime) {
         this.dateTime = dateTime;
+    }
+
+    public Long getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
+    }
+
+    public Long getShipmentId() {
+        return shipmentId;
+    }
+
+    public void setShipmentId(Long shipmentId) {
+        this.shipmentId = shipmentId;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 }

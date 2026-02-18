@@ -17,7 +17,7 @@
                 <a class="btn btn-outline-secondary" th:href="@{/ui/stocks}">Back</a>
             </div>
 
-            <div class="alert alert-danger" th:if="${errorMessage != null}" th:text="${errorMessage}"></div>
+            <div th:replace="~{fragments/alerts :: alerts}"></div>
 
             <div class="row g-3">
                 <div class="col-12 col-lg-5">
