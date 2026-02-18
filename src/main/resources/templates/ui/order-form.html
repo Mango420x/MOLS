@@ -27,6 +27,8 @@
                           method="post"
                           th:action="${formMode == 'create'} ? @{/ui/orders} : @{/ui/orders/{id}(id=${orderId})}">
 
+                        <div th:replace="~{fragments/csrf :: csrf}"></div>
+
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
                                 <label for="unitId" class="form-label">Unit</label>
@@ -83,6 +85,7 @@
                     </div>
 
                     <form th:object="${draftItemForm}" th:action="@{/ui/orders/draft/items}" method="post" class="row g-2 align-items-end">
+                        <div th:replace="~{fragments/csrf :: csrf}"></div>
                         <!-- keep header values when adding items -->
                         <input type="hidden" name="unitId" th:value="${orderForm.unitId}">
                         <input type="hidden" name="dateCreated" th:value="${orderForm.dateCreated}">
@@ -138,6 +141,7 @@
                                 <td class="text-end">
                                     <form class="d-inline" method="post"
                                           th:action="@{/ui/orders/draft/items/{index}/remove(index=${row.index})}">
+                                                                                <div th:replace="~{fragments/csrf :: csrf}"></div>
                                         <!-- keep header values when removing items -->
                                         <input type="hidden" name="unitId" th:value="${orderForm.unitId}">
                                         <input type="hidden" name="dateCreated" th:value="${orderForm.dateCreated}">
@@ -159,6 +163,7 @@
                     </div>
 
                     <form th:object="${inlineItemForm}" th:action="@{/ui/orders/{id}/items/inline-add(id=${orderId})}" method="post" class="row g-2 align-items-end">
+                        <div th:replace="~{fragments/csrf :: csrf}"></div>
                         <div class="col-12 col-md-7">
                             <label for="inlineResourceId" class="form-label">Resource</label>
                             <select id="inlineResourceId" class="form-select"
@@ -208,6 +213,7 @@
                                 <td class="text-end">
                                     <form class="d-flex justify-content-end gap-2" method="post"
                                           th:action="@{/ui/orders/{orderId}/items/{itemId}/inline-update(orderId=${orderId},itemId=${item.id})}">
+                                                                                <div th:replace="~{fragments/csrf :: csrf}"></div>
                                         <input class="form-control form-control-sm text-end" style="max-width: 110px;" type="number" min="1" name="quantity" th:value="${item.quantity}">
                                         <button class="btn btn-sm btn-outline-primary" type="submit">Update</button>
                                     </form>
@@ -216,6 +222,7 @@
                                     <form class="d-inline" method="post"
                                           th:action="@{/ui/orders/{orderId}/items/{itemId}/inline-delete(orderId=${orderId},itemId=${item.id})}"
                                           onsubmit="return confirm('Remove this item from the order?');">
+                                                                                <div th:replace="~{fragments/csrf :: csrf}"></div>
                                         <button class="btn btn-sm btn-outline-danger" type="submit">Remove</button>
                                     </form>
                                 </td>

@@ -68,6 +68,7 @@
                                       th:action="@{/ui/units/{id}/delete(id=${unit.id})}"
                                       method="post"
                                       onsubmit="return confirm('Delete this unit?');">
+                                                                        <div th:replace="~{fragments/csrf :: csrf}"></div>
                                     <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                                 </form>
                             </td>

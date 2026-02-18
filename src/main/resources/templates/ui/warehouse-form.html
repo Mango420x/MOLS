@@ -25,6 +25,8 @@
                           method="post"
                           th:action="${formMode == 'create'} ? @{/ui/warehouses} : @{/ui/warehouses/{id}(id=${warehouseId})}">
 
+                                                <div th:replace="~{fragments/csrf :: csrf}"></div>
+
                         <div class="mb-3">
                             <label for="name" class="form-label">Name</label>
                             <input id="name" type="text" class="form-control"

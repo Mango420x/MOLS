@@ -92,6 +92,7 @@
                                       th:action="@{/ui/stocks/{id}/delete(id=${stock.id})}"
                                       method="post"
                                       onsubmit="return confirm('Delete this stock record?');">
+                                                                        <div th:replace="~{fragments/csrf :: csrf}"></div>
                                     <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                                 </form>
                             </td>

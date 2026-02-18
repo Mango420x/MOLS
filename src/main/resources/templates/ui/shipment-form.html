@@ -25,6 +25,8 @@
                           method="post"
                           th:action="${formMode == 'create'} ? @{/ui/shipments} : @{/ui/shipments/{id}(id=${shipmentId})}">
 
+                        <div th:replace="~{fragments/csrf :: csrf}"></div>
+
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
                                 <label for="orderId" class="form-label">Order</label>

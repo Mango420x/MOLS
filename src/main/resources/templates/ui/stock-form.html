@@ -22,6 +22,7 @@
             <div class="card shadow-sm border-0">
                 <div class="card-body">
                     <form th:object="${stockForm}" method="post" th:action="@{/ui/stocks}">
+                        <div th:replace="~{fragments/csrf :: csrf}"></div>
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
                                 <label for="resourceId" class="form-label">Resource</label>

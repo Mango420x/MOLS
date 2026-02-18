@@ -47,6 +47,8 @@
                                   method="post"
                                   th:action="@{/ui/stocks/{id}/adjust(id=${stock.id})}">
 
+                                <div th:replace="~{fragments/csrf :: csrf}"></div>
+
                                 <div class="row g-3">
                                     <div class="col-12 col-md-6">
                                         <label for="operation" class="form-label">Action</label>

@@ -107,6 +107,7 @@
                                       th:action="@{/ui/shipments/{id}/delete(id=${shipment.id})}"
                                       method="post"
                                       onsubmit="return confirm('Delete this shipment?');">
+                                                                        <div th:replace="~{fragments/csrf :: csrf}"></div>
                                     <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                                 </form>
                             </td>
