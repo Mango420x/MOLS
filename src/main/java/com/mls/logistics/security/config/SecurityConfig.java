@@ -60,6 +60,9 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**",
                                  "/v3/api-docs/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/", "/ui/**", "/css/**", "/js/**",
+                                 "/images/**", "/webjars/**",
+                                 "/favicon.ico").permitAll()
 
                 // Read operations — any authenticated user (ADMIN or OPERATOR)
                 .requestMatchers(HttpMethod.GET, "/api/**").authenticated()

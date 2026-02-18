@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom" th:fragment="navbar">
+    <div class="container-fluid px-3 px-md-4">
+        <a class="navbar-brand fw-semibold" th:href="@{/ui}">
+            <i class="bi bi-box-seam me-1"></i>
+            Logistics UI
+        </a>
+        <div class="ms-auto d-flex gap-2">
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/swagger-ui.html}" target="_blank">Swagger</a>
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/v3/api-docs}" target="_blank">OpenAPI</a>
+        </div>
+    </div>
+</nav>
+</body>
+</html>

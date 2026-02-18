@@ -36,6 +36,7 @@ MOLS is built as a modern backend-first system:
 - **Maven** manages builds and dependencies.
 - **OpenAPI (Springdoc)** provides interactive API documentation via Swagger UI.
 - **Spring Security + JWT** secure the API with stateless authentication and role-based authorization.
+- **Thymeleaf + Bootstrap** provide a server-rendered UI base for dashboard and list views.
 - **Docker + Docker Compose** provide reproducible local runtime for app + PostgreSQL.
 
 These choices emphasize reliability, traceability, and long-term maintainability.
@@ -106,6 +107,21 @@ Controllers are documented with OpenAPI annotations (`@Tag`, `@Operation`, `@Api
 Notable stock operation:
 
 - `PATCH /api/stocks/{id}/adjust` adjusts quantity by delta and records movement automatically.
+
+---
+
+## UI Base (Thymeleaf)
+
+With the application running:
+
+- **Dashboard**: http://localhost:8080/ui
+- **Root redirect**: http://localhost:8080/ (redirects to `/ui`)
+
+Current Thymeleaf base includes:
+
+- Dashboard summary cards
+- List pages for warehouses, vehicles, and orders
+- Reusable layout fragments (navbar/sidebar)
 
 ---
 

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav class="col-lg-2 d-none d-lg-block border-end bg-white" th:fragment="sidebar(active)">
+    <div class="p-3">
+        <div class="text-uppercase small text-muted mb-2">Navigation</div>
+        <div class="nav nav-pills flex-column gap-1">
+            <a class="nav-link"
+               th:classappend="${active == 'dashboard'} ? ' active'"
+               th:href="@{/ui}">
+                <i class="bi bi-speedometer2 me-1"></i> Dashboard
+            </a>
+            <a class="nav-link"
+               th:classappend="${active == 'warehouses'} ? ' active'"
+               th:href="@{/ui/warehouses}">
+                <i class="bi bi-building me-1"></i> Warehouses
+            </a>
+            <a class="nav-link"
+               th:classappend="${active == 'vehicles'} ? ' active'"
+               th:href="@{/ui/vehicles}">
+                <i class="bi bi-truck me-1"></i> Vehicles
+            </a>
+            <a class="nav-link"
+               th:classappend="${active == 'orders'} ? ' active'"
+               th:href="@{/ui/orders}">
+                <i class="bi bi-receipt me-1"></i> Orders
+            </a>
+        </div>
+    </div>
+</nav>
+</body>
+</html>

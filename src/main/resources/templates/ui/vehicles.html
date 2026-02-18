@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Vehicles')}"></head>
+<body class="bg-body-tertiary">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container-fluid">
+    <div class="row min-vh-main">
+        <div th:replace="~{fragments/sidebar :: sidebar('vehicles')}"></div>
+
+        <main class="col-12 col-lg-10 px-3 px-md-4 py-4">
+            <h1 class="h3 mb-3">Vehicles</h1>
+            <div class="alert alert-warning" th:if="${dataError != null}" th:text="${dataError}"></div>
+
+            <div class="card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Type</th>
+                            <th>Capacity</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(vehicles)}">
+                            <td colspan="4" class="text-center text-secondary py-4">No vehicles to display.</td>
+                        </tr>
+                        <tr th:each="vehicle : ${vehicles}">
+                            <td th:text="${vehicle.id}"></td>
+                            <td th:text="${vehicle.type}"></td>
+                            <td th:text="${vehicle.capacity}"></td>
+                            <td>
+                                <span class="badge text-bg-light border" th:text="${vehicle.status}"></span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/scripts :: scripts}"></th:block>
+</body>
+</html>
