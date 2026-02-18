@@ -1,5 +1,9 @@
 # MOLS — Multimodal Operative Logistics System
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/6c3cae38-df16-4c85-a334-6a53cb1f27fa" width="300" alt="Gemini_Generated_Image">
+</p>
+
 ![CI](https://github.com/Mango420x/MOLS/actions/workflows/ci.yml/badge.svg)
 
 Portfolio project: a web-based logistics system to manage resources, stock, orders, shipments, and movements with end-to-end traceability.
