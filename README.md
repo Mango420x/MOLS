@@ -36,6 +36,7 @@ MOLS is built as a modern backend-first system:
 - **Maven** manages builds and dependencies.
 - **OpenAPI (Springdoc)** provides interactive API documentation via Swagger UI.
 - **Spring Security + JWT** secure the API with stateless authentication and role-based authorization.
+- **Thymeleaf + Bootstrap** provide a server-rendered admin UI (dashboard + CRUD workflows).
 - **Docker + Docker Compose** provide reproducible local runtime for app + PostgreSQL.
 
 These choices emphasize reliability, traceability, and long-term maintainability.
@@ -109,6 +110,25 @@ Notable stock operation:
 
 ---
 
+## UI Base (Thymeleaf)
+
+With the application running:
+
+- **Dashboard**: http://localhost:8080/ui
+- **Root redirect**: http://localhost:8080/ (redirects to `/ui`)
+
+Current Thymeleaf base includes:
+
+- Dashboard summary cards
+- CRUD screens for warehouses, resources, vehicles, units, shipments, and orders
+- Stock management (create + adjust) and audit log (movements)
+- Orders UX: click an Order ID to expand items inside the table; create/edit orders with inline items
+- Dark mode toggle
+
+Note: the UI routes under `/ui/**` are currently publicly accessible for demo/admin simplicity. The REST API under `/api/**` remains JWT-protected.
+
+---
+
 ## Getting Started
 
 1. Clone the repository.
@@ -119,7 +139,7 @@ Notable stock operation:
 	./mvnw.cmd spring-boot:run
 	```
 4. Open:
-	- API base: http://localhost:8080
+	- APP UI: http://localhost:8080
 	- Swagger UI: http://localhost:8080/swagger-ui.html
 
 ---
@@ -160,7 +180,7 @@ Run all tests with:
 ./mvnw.cmd test
 ```
 
-Current local status: full suite passing (`118` tests).
+Current local status: full suite passing (`138` tests).
 
 ---
 

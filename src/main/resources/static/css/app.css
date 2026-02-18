@@ -1,0 +1,156 @@
+body {
+    font-size: 0.95rem;
+}
+
+/*
+  MOLS accent palette.
+  Bootstrap's `.btn-primary` uses component-specific CSS variables, so we
+  explicitly override those tokens to ensure buttons/borders adopt the palette.
+*/
+:root {
+    --mols-accent: #1b4332;
+    --mols-accent-hover: #143628;
+    --mols-accent-active: #0f2b1f;
+    --mols-accent-rgb: 27, 67, 50;
+
+    /* Secondary accents (brand-related but distinct) */
+    --mols-swagger: #2d6a4f;
+    --mols-swagger-hover: #1f5a41;
+    --mols-openapi: #6b4f1d;
+    --mols-openapi-hover: #5a4218;
+
+    --bs-primary: var(--mols-accent);
+    --bs-primary-rgb: var(--mols-accent-rgb);
+    --bs-link-color: var(--mols-accent);
+    --bs-link-hover-color: var(--mols-accent-hover);
+}
+
+[data-bs-theme="dark"] {
+    --mols-accent: #2d6a4f;
+    --mols-accent-hover: #40916c;
+    --mols-accent-active: #52b788;
+    --mols-accent-rgb: 45, 106, 79;
+
+    --mols-swagger: #52b788;
+    --mols-swagger-hover: #74c69d;
+    --mols-openapi: #b0892f;
+    --mols-openapi-hover: #d4a64b;
+
+    --bs-primary: var(--mols-accent);
+    --bs-primary-rgb: var(--mols-accent-rgb);
+    --bs-link-color: var(--mols-accent-active);
+    --bs-link-hover-color: var(--mols-accent-hover);
+}
+
+/* Primary buttons */
+.btn-primary {
+    --bs-btn-bg: var(--mols-accent);
+    --bs-btn-border-color: var(--mols-accent);
+    --bs-btn-hover-bg: var(--mols-accent-hover);
+    --bs-btn-hover-border-color: var(--mols-accent-hover);
+    --bs-btn-active-bg: var(--mols-accent-active);
+    --bs-btn-active-border-color: var(--mols-accent-active);
+    --bs-btn-focus-shadow-rgb: var(--mols-accent-rgb);
+}
+
+/* Outline primary buttons */
+.btn-outline-primary {
+    --bs-btn-color: var(--mols-accent);
+    --bs-btn-border-color: var(--mols-accent);
+    --bs-btn-hover-bg: var(--mols-accent);
+    --bs-btn-hover-border-color: var(--mols-accent);
+    --bs-btn-active-bg: var(--mols-accent-active);
+    --bs-btn-active-border-color: var(--mols-accent-active);
+    --bs-btn-focus-shadow-rgb: var(--mols-accent-rgb);
+}
+
+/* Navbar utility buttons */
+.btn-mols-swagger {
+    --bs-btn-color: var(--mols-swagger);
+    --bs-btn-border-color: var(--mols-swagger);
+    --bs-btn-hover-bg: var(--mols-swagger);
+    --bs-btn-hover-border-color: var(--mols-swagger);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-active-bg: var(--mols-swagger-hover);
+    --bs-btn-active-border-color: var(--mols-swagger-hover);
+    --bs-btn-active-color: #fff;
+    --bs-btn-focus-shadow-rgb: var(--mols-accent-rgb);
+}
+
+.btn-mols-openapi {
+    --bs-btn-color: var(--mols-openapi);
+    --bs-btn-border-color: var(--mols-openapi);
+    --bs-btn-hover-bg: var(--mols-openapi);
+    --bs-btn-hover-border-color: var(--mols-openapi);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-active-bg: var(--mols-openapi-hover);
+    --bs-btn-active-border-color: var(--mols-openapi-hover);
+    --bs-btn-active-color: #fff;
+    --bs-btn-focus-shadow-rgb: var(--mols-accent-rgb);
+}
+
+/* Theme toggle animation */
+#theme-toggle {
+    transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+#theme-toggle-icon {
+    display: inline-block;
+    transition: transform 220ms ease;
+}
+
+#theme-toggle.is-toggling {
+    transform: translateY(-1px);
+}
+
+#theme-toggle.is-toggling #theme-toggle-icon {
+    transform: rotate(180deg) scale(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #theme-toggle,
+    #theme-toggle-icon {
+        transition: none;
+    }
+}
+
+/* Accent borders (tables/cards, etc.) */
+.border-primary {
+    border-color: var(--mols-accent) !important;
+}
+
+.min-vh-main {
+    min-height: calc(100vh - 56px);
+}
+
+.nav-pills .nav-link {
+    color: var(--bs-secondary-color);
+    border-radius: .5rem;
+}
+
+.nav-pills .nav-link.active {
+    font-weight: 600;
+    color: #fff;
+    background-color: var(--mols-accent);
+}
+
+.nav-pills .nav-link:hover {
+    color: var(--bs-body-color);
+    background-color: rgba(var(--mols-accent-rgb), 0.12);
+}
+
+.nav-pills .nav-link:focus-visible {
+    box-shadow: 0 0 0 .2rem rgba(var(--mols-accent-rgb), 0.35);
+}
+
+.card {
+    border-radius: .75rem;
+}
+
+/* Table header sort links should look like normal text (not blue links) */
+.table thead a,
+.table thead a:hover,
+.table thead a:focus,
+.table thead a:visited {
+    color: inherit;
+}

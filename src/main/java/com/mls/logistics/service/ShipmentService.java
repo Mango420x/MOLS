@@ -8,6 +8,7 @@ import com.mls.logistics.dto.request.CreateShipmentRequest;
 import com.mls.logistics.dto.request.UpdateShipmentRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.ShipmentRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +40,13 @@ public class ShipmentService {
      */
     public List<Shipment> getAllShipments() {
         return shipmentRepository.findAll();
+    }
+
+    /**
+     * Retrieves all registered shipments with sorting.
+     */
+    public List<Shipment> getAllShipments(Sort sort) {
+        return shipmentRepository.findAll(sort);
     }
 
     /**

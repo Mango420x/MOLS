@@ -11,6 +11,7 @@ import com.mls.logistics.exception.InsufficientStockException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +44,20 @@ public class OrderItemService {
      */
     public List<OrderItem> getAllOrderItems() {
         return orderItemRepository.findAll();
+    }
+
+    /**
+     * Retrieves all items for a specific order.
+     */
+    public List<OrderItem> getOrderItemsByOrderId(Long orderId, Sort sort) {
+        return orderItemRepository.findByOrderId(orderId, sort);
+    }
+
+    public List<OrderItem> getOrderItemsByOrderIds(List<Long> orderIds, Sort sort) {
+        if (orderIds == null || orderIds.isEmpty()) {
+            return List.of();
+        }
+        return orderItemRepository.findByOrderIdIn(orderIds, sort);
     }
 
     /**
@@ -109,6 +124,24 @@ public class OrderItemService {
         OrderItem orderItem = orderItemRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("OrderItem", "id", id));
+
+        Long effectiveResourceId = request.getResourceId() != null
+                ? request.getResourceId()
+                : (orderItem.getResource() != null ? orderItem.getResource().getId() : null);
+
+        Integer effectiveQuantity = request.getQuantity() != null ? request.getQuantity() : null;
+
+        // Rule 3: requested quantity must not exceed available stock
+        if (effectiveResourceId != null && effectiveQuantity != null) {
+            int available = stockService.getTotalAvailableQuantity(effectiveResourceId);
+            if (effectiveQuantity > available) {
+                throw new InsufficientStockException(
+                        "Cannot update order item. Requested: " + effectiveQuantity +
+                                ", available in stock: " + available +
+                                ". Resource id: " + effectiveResourceId
+                );
+            }
+        }
 
         if (request.getOrderId() != null) {
             Order order = new Order();

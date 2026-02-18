@@ -2,7 +2,9 @@ package com.mls.logistics.repository;
 
 import com.mls.logistics.domain.OrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Sort;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -20,4 +22,14 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * @return list of order items for this order
      */
     List<OrderItem> findByOrderId(Long orderId);
+
+    /**
+     * Finds all items belonging to a specific order with sorting.
+     */
+    List<OrderItem> findByOrderId(Long orderId, Sort sort);
+
+    /**
+     * Finds all items belonging to a list of orders.
+     */
+    List<OrderItem> findByOrderIdIn(Collection<Long> orderIds, Sort sort);
 }

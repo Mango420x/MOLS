@@ -3,6 +3,7 @@ package com.mls.logistics.service;
 import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateOrderRequest;
+import com.mls.logistics.dto.request.CreateOrderItemRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.mockito.ArgumentCaptor;
 
 /**
  * Unit tests for OrderService.
@@ -33,6 +35,9 @@ class OrderServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
+
+    @Mock
+    private OrderItemService orderItemService;
 
     @InjectMocks
     private OrderService orderService;
@@ -106,6 +111,35 @@ class OrderServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getStatus()).isEqualTo("CREATED");
         verify(orderRepository, times(1)).save(any(Order.class));
+    }
+
+    @Test
+    void createOrderWithItems_WithValidItems_ShouldCreateOrderAndItems() {
+        // Given
+        CreateOrderRequest request = new CreateOrderRequest(1L, LocalDate.now(), "CREATED");
+        when(orderRepository.save(any(Order.class))).thenReturn(testOrder);
+
+        CreateOrderItemRequest item1 = new CreateOrderItemRequest(null, 10L, 2);
+        CreateOrderItemRequest item2 = new CreateOrderItemRequest(null, 11L, 5);
+
+        when(orderItemService.createOrderItem(any(CreateOrderItemRequest.class))).thenReturn(null);
+
+        // When
+        Order result = orderService.createOrderWithItems(request, List.of(item1, item2));
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(orderRepository, times(1)).save(any(Order.class));
+
+        ArgumentCaptor<CreateOrderItemRequest> captor = ArgumentCaptor.forClass(CreateOrderItemRequest.class);
+        verify(orderItemService, times(2)).createOrderItem(captor.capture());
+
+        List<CreateOrderItemRequest> captured = captor.getAllValues();
+        assertThat(captured).hasSize(2);
+        assertThat(captured.get(0).getOrderId()).isEqualTo(1L);
+        assertThat(captured.get(1).getOrderId()).isEqualTo(1L);
+        assertThat(captured).extracting(CreateOrderItemRequest::getResourceId).containsExactly(10L, 11L);
+        assertThat(captured).extracting(CreateOrderItemRequest::getQuantity).containsExactly(2, 5);
     }
 
     @Test

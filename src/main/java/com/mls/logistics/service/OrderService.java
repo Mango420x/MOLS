@@ -3,9 +3,11 @@ package com.mls.logistics.service;
 import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateOrderRequest;
+import com.mls.logistics.dto.request.CreateOrderItemRequest;
 import com.mls.logistics.dto.request.UpdateOrderRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,13 +25,15 @@ import java.util.Optional;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderItemService orderItemService;
 
     /**
      * Constructor-based dependency injection.
      * This is the recommended approach in Spring.
      */
-    public OrderService(OrderRepository orderRepository) {
+    public OrderService(OrderRepository orderRepository, OrderItemService orderItemService) {
         this.orderRepository = orderRepository;
+        this.orderItemService = orderItemService;
     }
 
     /**
@@ -37,6 +41,10 @@ public class OrderService {
      */
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
+    }
+
+    public List<Order> getAllOrders(Sort sort) {
+        return orderRepository.findAll(sort);
     }
 
     /**
@@ -77,6 +85,29 @@ public class OrderService {
         order.setStatus(request.getStatus());
 
         return orderRepository.save(order);
+    }
+
+    /**
+     * Creates an order and its items in a single database transaction.
+     *
+     * If any item fails validation (for example insufficient stock), nothing is saved.
+     */
+    @Transactional
+    public Order createOrderWithItems(CreateOrderRequest request, List<CreateOrderItemRequest> items) {
+        Order order = createOrder(request);
+
+        if (items != null) {
+            for (CreateOrderItemRequest item : items) {
+                CreateOrderItemRequest toCreate = new CreateOrderItemRequest(
+                        order.getId(),
+                        item.getResourceId(),
+                        item.getQuantity()
+                );
+                orderItemService.createOrderItem(toCreate);
+            }
+        }
+
+        return order;
     }
 
     /**

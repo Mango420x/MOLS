@@ -4,6 +4,7 @@ import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.UpdateWarehouseRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.WarehouseRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import com.mls.logistics.dto.request.CreateWarehouseRequest;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,10 @@ public class WarehouseService {
      */
     public List<Warehouse> getAllWarehouses() {
         return warehouseRepository.findAll();
+    }
+
+    public List<Warehouse> getAllWarehouses(Sort sort) {
+        return warehouseRepository.findAll(sort);
     }
 
     /**

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Dashboard')}"></head>
+<body class="bg-body-tertiary">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container-fluid">
+    <div class="row min-vh-main">
+        <div th:replace="~{fragments/sidebar :: sidebar('dashboard')}"></div>
+
+        <main class="col-12 col-lg-10 px-3 px-md-4 py-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="h3 mb-0">Dashboard</h1>
+            </div>
+
+            <div class="alert alert-warning" th:if="${dataError != null}" th:text="${dataError}"></div>
+
+            <div class="row g-3">
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <div class="text-secondary small text-uppercase">Warehouses</div>
+                            <div class="display-6 fw-semibold" th:text="${warehouseCount}">0</div>
+                            <a class="btn btn-sm btn-primary" th:href="@{/ui/warehouses}">View list</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <div class="text-secondary small text-uppercase">Vehicles</div>
+                            <div class="display-6 fw-semibold" th:text="${vehicleCount}">0</div>
+                            <a class="btn btn-sm btn-primary" th:href="@{/ui/vehicles}">View list</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <div class="text-secondary small text-uppercase">Orders</div>
+                            <div class="display-6 fw-semibold" th:text="${orderCount}">0</div>
+                            <a class="btn btn-sm btn-primary" th:href="@{/ui/orders}">View list</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <div class="text-secondary small text-uppercase">Units</div>
+                            <div class="display-6 fw-semibold" th:text="${unitCount}">0</div>
+                            <a class="btn btn-sm btn-primary" th:href="@{/ui/units}">View list</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4 shadow-sm border-0">
+                <div class="card-body">
+                    <h2 class="h5">Front base ready to iterate</h2>
+                    <p class="mb-0 text-secondary">
+                        This base uses Thymeleaf + Bootstrap and is already wired to the existing backend.
+                        You can extend from here with forms, actions, and module-specific pages.
+                    </p>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/scripts :: scripts}"></th:block>
+</body>
+</html>
