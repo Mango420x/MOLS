@@ -6,6 +6,11 @@
     <meta name="color-scheme" content="dark light">
     <title th:text="${title} + ' | MOLS'">MOLS</title>
 
+    <!-- Browser tab icon (favicon) -->
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" type="image/png" th:href="@{/favicon.png}">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
+
     <script>
         (() => {
             const storedTheme = localStorage.getItem('theme');
