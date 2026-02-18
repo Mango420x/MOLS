@@ -1,9 +1,10 @@
 # MOLS — Project Overview
 
 ## Purpose
-- MOLS (Multimodal Operative Logistics System) is a backend-centric logistics management system designed with an industrial/defense-grade engineering mindset.
+- MOLS (Multimodal Operative Logistics System) is a backend-first logistics management system designed with an industrial/defense-grade engineering mindset.
 - Provides REST API services for managing logistics operations: units, warehouses, resources, stock, orders, shipments, vehicles, and movement auditing.
-- Portfolio-grade backend demonstrating clean architecture, strict layering, auditability, and deterministic behavior.
+- Includes a lightweight admin UI (Thymeleaf) for non-technical users while keeping the REST API + JWT security intact.
+- Portfolio-grade project demonstrating clean architecture, strict layering, auditability, and deterministic behavior.
 
 ## Project Status
 - **Runtime**: Spring Boot 4.0.2 (Spring MVC) running on Java 21, connected to PostgreSQL.
@@ -16,6 +17,7 @@
 - **Build**: Maven wrapper present (`mvnw`, `mvnw.cmd`); build artifacts in `target/`.
 - **CI**: GitHub Actions workflow configured at `.github/workflows/ci.yml` (build + tests on push/PR to `main`).
 - **Security**: JWT-based authentication and role-based authorization enabled (`/api/auth/register`, `/api/auth/login`).
+- **UI**: Thymeleaf + Bootstrap 5.3 admin interface under `/ui/**` (dark mode supported).
 - **Testing**: Controller and service test suites implemented and passing locally via Maven.
 - **Containerization**: Docker multi-stage build + Docker Compose orchestration available for app + database.
 - **Business Rules**: Core stock/order constraints already enforced in services (non-negative stock, automatic movement audit, order item stock ceiling).
@@ -65,7 +67,7 @@ Business logic services for each domain entity. Services are the source of truth
 
 #### 3. **Repository Layer** (`repository/`)
 Spring Data JPA repositories handling only persistence operations.
-- 9 repository interfaces extending `CrudRepository`
+- Repository interfaces extend `JpaRepository`
 - No business logic allowed
 
 #### 4. **Domain Layer** (`domain/`)
@@ -90,6 +92,28 @@ Authentication and authorization components:
 - `JwtService` — token generation and validation
 - `AuthController` — public register/login endpoints (`/api/auth/**`)
 - `AppUser`, `Role`, `AppUserRepository`, `AppUserService`
+
+### UI: Server-Side Admin Interface
+
+The project includes a server-rendered admin UI built with Thymeleaf.
+
+- **UI Controller**: `web/UiController` (Spring MVC `@Controller`)
+- **Templates**: `src/main/resources/templates/ui/*` + fragments under `templates/fragments/*`
+- **Static assets**: `src/main/resources/static/*`
+- **Theme**: Bootstrap 5.3 color modes (dark mode toggle)
+
+**UI Routes (public)**:
+- Dashboard: `/ui`
+- Warehouses: `/ui/warehouses`
+- Resources: `/ui/resources`
+- Vehicles: `/ui/vehicles`
+- Stock: `/ui/stocks` (create + adjust + delete)
+- Audit log: `/ui/movements`
+- Orders: `/ui/orders` (expand items in-table; create/edit with inline items)
+- Shipments: `/ui/shipments`
+- Units: `/ui/units`
+
+**Security note**: `/api/**` remains JWT-protected; `/ui/**` is currently allowed without login for demo/admin simplicity.
 
 ### Configuration
 - **Database**: PostgreSQL configured in `src/main/resources/application.properties`
@@ -180,21 +204,20 @@ Authentication and authorization components:
 These rules are **enforced in services**, not controllers:
 
 1. Stock must never go negative
-2. Orders must not exceed available stock
+2. Order items must not exceed available stock (validated against total availability)
 3. Every stock change must generate a Movement record
-4. Vehicles must be compatible with shipment transport type
-5. Orders are complete only when fully delivered
+4. Shipment/order fulfillment automation remains planned (linking order items → shipment → stock exit)
 
 ### Current Enforcement Status
 
 - ✅ Rule 1 implemented in `StockService.adjustStock()` and `StockService.createStock()`
    - Rejects negative initial quantity
    - Rejects adjustments that would produce negative stock (`InsufficientStockException`, HTTP 409)
-- ✅ Rule 2 implemented in `StockService`
-   - Every stock increase/decrease records a `Movement` (`ENTRY`/`EXIT`) automatically
-- ✅ Rule 3 implemented in `OrderItemService.createOrderItem(CreateOrderItemRequest)`
+- ✅ Rule 2 implemented in `OrderItemService` (create and update)
    - Rejects order items where requested quantity exceeds total available stock (`InsufficientStockException`, HTTP 409)
-- 🚧 Rules 4 and 5 remain planned for future phases.
+- ✅ Rule 3 implemented in `StockService.adjustStock()` and `StockService.createStock()`
+   - Every stock increase/decrease records a `Movement` (`ENTRY`/`EXIT`) automatically
+- 🚧 Rule 4 remains planned for future phases.
 
 ## Developer Guidelines
 
@@ -247,11 +270,18 @@ src/main/java/com/mls/logistics/
 ├── domain/          # JPA entities (9 entities)
 ├── repository/      # Spring Data repositories (9 interfaces)
 ├── service/         # Business logic services (9 services)
+├── web/             # Thymeleaf UI controller + UI form/view models
 ├── security/        # JWT auth, users, roles, and security config
 ├── exception/       # Global exception handling and error contracts
 ├── dto/             # Request/response DTO contracts
 ├── config/          # OpenAPI and app configuration classes
 └── LogisticsApplication.java
+
+src/main/resources/
+├── templates/        # Thymeleaf templates
+│   ├── fragments/    # layout fragments
+│   └── ui/           # UI pages
+└── static/           # CSS/JS/assets
 ```
 
 ### Containerization
@@ -295,6 +325,7 @@ src/main/java/com/mls/logistics/
 - [x] Automated test suite (controller + service)
 - [x] Dockerization (multi-stage image build + compose stack)
 - [x] GitHub Actions CI pipeline (build + test on push/PR to `main`)
+- [x] Thymeleaf admin UI (list pages + CRUD forms + stock adjust + audit log)
 
 ### Planned (In Order)
 1. Deeper integration testing (e.g., Testcontainers)
@@ -328,7 +359,7 @@ Authentication endpoints:
 
 ### Business Rule Validation (2026-02-17)
 - Stock negative prevention validated: adjusting below zero returns HTTP 409.
-- Automatic movement audit validated: stock adjustment creates `ENTRY` movement.
+- Automatic movement audit validated: stock changes create `ENTRY` or `EXIT` movements depending on the adjustment.
 - Order item stock ceiling validated: excessive quantity returns HTTP 409.
 
 ### Security Validation (2026-02-17)
@@ -396,4 +427,4 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
    - Add unit/integration tests (controller + service + repository)
    - Review validation rules for all request DTOs
 
-**Last updated**: 2026-02-17
+**Last updated**: 2026-02-18

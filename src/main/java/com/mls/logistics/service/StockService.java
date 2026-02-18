@@ -11,6 +11,7 @@ import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.MovementRepository;
 import com.mls.logistics.repository.StockRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,11 +59,24 @@ public class StockService {
         return stockRepository.findAll();
     }
 
+    public List<Stock> getAllStocks(Sort sort) {
+        return stockRepository.findAll(sort);
+    }
+
     /**
      * Retrieves a stock by its identifier.
      */
     public Optional<Stock> getStockById(Long id) {
         return stockRepository.findById(id);
+    }
+
+    /**
+     * Finds a stock record by resource and warehouse.
+     *
+     * Useful for UI flows to avoid creating duplicate stock rows.
+     */
+    public Optional<Stock> getStockByResourceAndWarehouse(Long resourceId, Long warehouseId) {
+        return stockRepository.findByResourceIdAndWarehouseId(resourceId, warehouseId);
     }
 
     /**

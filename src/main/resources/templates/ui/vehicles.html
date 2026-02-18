@@ -9,30 +9,100 @@
         <div th:replace="~{fragments/sidebar :: sidebar('vehicles')}"></div>
 
         <main class="col-12 col-lg-10 px-3 px-md-4 py-4">
-            <h1 class="h3 mb-3">Vehicles</h1>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="h3 mb-0">Vehicles</h1>
+                <a class="btn btn-primary" th:href="@{/ui/vehicles/new}">
+                    <i class="bi bi-plus-lg me-1"></i>
+                    New vehicle
+                </a>
+            </div>
+
+            <div class="alert alert-success" th:if="${successMessage != null}" th:text="${successMessage}"></div>
+            <div class="alert alert-danger" th:if="${errorMessage != null}" th:text="${errorMessage}"></div>
             <div class="alert alert-warning" th:if="${dataError != null}" th:text="${dataError}"></div>
 
             <div class="card shadow-sm border-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                        <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Type</th>
-                            <th>Capacity</th>
-                            <th>Status</th>
+                            <th>
+                                <a class="link-underline link-underline-opacity-0"
+                                   th:href="@{/ui/vehicles(sort='id',dir=${sortKey == 'id' and sortDir == 'asc' ? 'desc' : 'asc'})}">
+                                    ID
+                                    <i class="bi"
+                                       th:classappend="${sortKey == 'id' ? (sortDir == 'asc' ? ' bi-sort-up' : ' bi-sort-down') : ' bi-arrow-down-up'}"></i>
+                                </a>
+                            </th>
+                            <th>
+                                <a class="link-underline link-underline-opacity-0"
+                                   th:href="@{/ui/vehicles(sort='type',dir=${sortKey == 'type' and sortDir == 'asc' ? 'desc' : 'asc'})}">
+                                    Type
+                                    <i class="bi"
+                                       th:classappend="${sortKey == 'type' ? (sortDir == 'asc' ? ' bi-sort-up' : ' bi-sort-down') : ' bi-arrow-down-up'}"></i>
+                                </a>
+                            </th>
+                            <th>
+                                <a class="link-underline link-underline-opacity-0"
+                                   th:href="@{/ui/vehicles(sort='capacity',dir=${sortKey == 'capacity' and sortDir == 'asc' ? 'desc' : 'asc'})}">
+                                    Capacity (kg)
+                                    <i class="bi"
+                                       th:classappend="${sortKey == 'capacity' ? (sortDir == 'asc' ? ' bi-sort-up' : ' bi-sort-down') : ' bi-arrow-down-up'}"></i>
+                                </a>
+                            </th>
+                            <th>
+                                <a class="link-underline link-underline-opacity-0"
+                                   th:href="@{/ui/vehicles(sort='status',dir=${sortKey == 'status' and sortDir == 'asc' ? 'desc' : 'asc'})}">
+                                    Status
+                                    <i class="bi"
+                                       th:classappend="${sortKey == 'status' ? (sortDir == 'asc' ? ' bi-sort-up' : ' bi-sort-down') : ' bi-arrow-down-up'}"></i>
+                                </a>
+                            </th>
+                            <th class="text-end">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:if="${#lists.isEmpty(vehicles)}">
-                            <td colspan="4" class="text-center text-secondary py-4">No vehicles to display.</td>
+                            <td colspan="5" class="text-center text-secondary py-4">No vehicles to display.</td>
                         </tr>
                         <tr th:each="vehicle : ${vehicles}">
                             <td th:text="${vehicle.id}"></td>
-                            <td th:text="${vehicle.type}"></td>
-                            <td th:text="${vehicle.capacity}"></td>
                             <td>
-                                <span class="badge text-bg-light border" th:text="${vehicle.status}"></span>
+                                <span th:switch="${vehicle.type}">
+                                    <span th:case="'LAND'">Land</span>
+                                    <span th:case="'SEA'">Sea</span>
+                                    <span th:case="'AIR'">Air</span>
+
+                                    <span th:case="'TERRESTRE'">Land</span>
+                                    <span th:case="'MARITIMO'">Sea</span>
+                                    <span th:case="'AEREO'">Air</span>
+
+                                    <span th:case="*" th:text="${vehicle.type}"></span>
+                                </span>
+                            </td>
+                            <td th:text="${vehicle.capacity} + ' kg'"></td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${vehicle.status == 'AVAILABLE'} ? ' text-bg-success' : (${vehicle.status == 'IN_USE'} ? ' text-bg-warning' : (${vehicle.status == 'IN_REPAIR'} ? ' text-bg-danger' : ' text-bg-secondary'))">
+                                    <span th:switch="${vehicle.status}">
+                                        <span th:case="'AVAILABLE'">Available</span>
+                                        <span th:case="'IN_USE'">In use</span>
+                                        <span th:case="'IN_REPAIR'">In repair</span>
+                                        <span th:case="*" th:text="${vehicle.status}"></span>
+                                    </span>
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary"
+                                   th:href="@{/ui/vehicles/{id}/edit(id=${vehicle.id})}">
+                                    Edit
+                                </a>
+                                <form class="d-inline"
+                                      th:action="@{/ui/vehicles/{id}/delete(id=${vehicle.id})}"
+                                      method="post"
+                                      onsubmit="return confirm('Delete this vehicle?');">
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                                </form>
                             </td>
                         </tr>
                         </tbody>

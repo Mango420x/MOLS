@@ -16,32 +16,42 @@
             <div class="alert alert-warning" th:if="${dataError != null}" th:text="${dataError}"></div>
 
             <div class="row g-3">
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-6 col-xl-3">
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-body">
                             <div class="text-secondary small text-uppercase">Warehouses</div>
                             <div class="display-6 fw-semibold" th:text="${warehouseCount}">0</div>
-                            <a class="btn btn-sm btn-outline-primary" th:href="@{/ui/warehouses}">View list</a>
+                            <a class="btn btn-sm btn-primary" th:href="@{/ui/warehouses}">View list</a>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-6 col-xl-3">
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-body">
                             <div class="text-secondary small text-uppercase">Vehicles</div>
                             <div class="display-6 fw-semibold" th:text="${vehicleCount}">0</div>
-                            <a class="btn btn-sm btn-outline-primary" th:href="@{/ui/vehicles}">View list</a>
+                            <a class="btn btn-sm btn-primary" th:href="@{/ui/vehicles}">View list</a>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-6 col-xl-3">
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-body">
                             <div class="text-secondary small text-uppercase">Orders</div>
                             <div class="display-6 fw-semibold" th:text="${orderCount}">0</div>
-                            <a class="btn btn-sm btn-outline-primary" th:href="@{/ui/orders}">View list</a>
+                            <a class="btn btn-sm btn-primary" th:href="@{/ui/orders}">View list</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <div class="text-secondary small text-uppercase">Units</div>
+                            <div class="display-6 fw-semibold" th:text="${unitCount}">0</div>
+                            <a class="btn btn-sm btn-primary" th:href="@{/ui/units}">View list</a>
                         </div>
                     </div>
                 </div>

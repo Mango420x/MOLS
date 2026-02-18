@@ -5,6 +5,7 @@ import com.mls.logistics.dto.request.CreateUnitRequest;
 import com.mls.logistics.dto.request.UpdateUnitRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.UnitRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,10 @@ public class UnitService {
      */
     public List<Unit> getAllUnits() {
         return unitRepository.findAll();
+    }
+
+    public List<Unit> getAllUnits(Sort sort) {
+        return unitRepository.findAll(sort);
     }
 
     /**

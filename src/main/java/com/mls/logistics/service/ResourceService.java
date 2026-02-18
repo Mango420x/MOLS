@@ -5,6 +5,7 @@ import com.mls.logistics.dto.request.CreateResourceRequest;
 import com.mls.logistics.dto.request.UpdateResourceRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.ResourceRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,10 @@ public class ResourceService {
      */
     public List<Resource> getAllResources() {
         return resourceRepository.findAll();
+    }
+
+    public List<Resource> getAllResources(Sort sort) {
+        return resourceRepository.findAll(sort);
     }
 
     /**

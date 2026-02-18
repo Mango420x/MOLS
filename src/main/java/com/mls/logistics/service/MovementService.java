@@ -6,6 +6,7 @@ import com.mls.logistics.dto.request.CreateMovementRequest;
 import com.mls.logistics.dto.request.UpdateMovementRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.MovementRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +38,13 @@ public class MovementService {
      */
     public List<Movement> getAllMovements() {
         return movementRepository.findAll();
+    }
+
+    /**
+     * Retrieves all registered movements with ordering.
+     */
+    public List<Movement> getAllMovements(Sort sort) {
+        return movementRepository.findAll(sort);
     }
 
     /**
