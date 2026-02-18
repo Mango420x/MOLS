@@ -322,6 +322,12 @@ public class UiController {
                     } catch (ResourceNotFoundException ex) {
                         redirectAttributes.addFlashAttribute("errorMessage", "Shipment not found.");
                         return "redirect:/ui/shipments";
+                    } catch (InsufficientStockException | InvalidRequestException ex) {
+                        populateShipmentReferenceData(model);
+                        model.addAttribute("shipmentId", id);
+                        model.addAttribute("formMode", "edit");
+                        model.addAttribute("errorMessage", ex.getMessage());
+                        return "ui/shipment-form";
                     } catch (DataIntegrityViolationException ex) {
                         populateShipmentReferenceData(model);
                         model.addAttribute("shipmentId", id);

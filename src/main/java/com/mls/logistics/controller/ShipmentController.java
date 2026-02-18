@@ -122,11 +122,13 @@ public class ShipmentController {
      */
     @Operation(
         summary = "Update a shipment",
-        description = "Updates an existing shipment. Only provided fields are updated."
+        description = "Updates an existing shipment. Only provided fields are updated. " +
+                "Note: when status transitions to DELIVERED, the system deducts stock from the shipment's origin warehouse for each order item and records movement audit entries."
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Shipment updated successfully"),
         @ApiResponse(responseCode = "404", description = "Shipment not found"),
+        @ApiResponse(responseCode = "409", description = "Insufficient stock to deliver this shipment"),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
     @PutMapping("/{id}")

@@ -1,10 +1,15 @@
 package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Order;
+import com.mls.logistics.domain.OrderItem;
+import com.mls.logistics.domain.Resource;
 import com.mls.logistics.domain.Shipment;
+import com.mls.logistics.domain.Stock;
 import com.mls.logistics.domain.Vehicle;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateShipmentRequest;
+import com.mls.logistics.dto.request.UpdateShipmentRequest;
+import com.mls.logistics.exception.InsufficientStockException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.ShipmentRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +26,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -34,6 +42,12 @@ class ShipmentServiceTest {
 
     @Mock
     private ShipmentRepository shipmentRepository;
+
+    @Mock
+    private OrderItemService orderItemService;
+
+    @Mock
+    private StockService stockService;
 
     @InjectMocks
     private ShipmentService shipmentService;
@@ -114,6 +128,89 @@ class ShipmentServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getStatus()).isEqualTo("PLANNED");
         verify(shipmentRepository, times(1)).save(any(Shipment.class));
+    }
+
+    @Test
+    void updateShipment_WhenTransitionToDelivered_ShouldDeductStockForEachOrderItem() {
+        // Given
+        when(shipmentRepository.findById(1L)).thenReturn(Optional.of(testShipment));
+        when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
+
+        Resource r1 = new Resource();
+        r1.setId(10L);
+        OrderItem i1 = new OrderItem();
+        i1.setId(100L);
+        i1.setResource(r1);
+        i1.setQuantity(3);
+
+        Resource r2 = new Resource();
+        r2.setId(11L);
+        OrderItem i2 = new OrderItem();
+        i2.setId(101L);
+        i2.setResource(r2);
+        i2.setQuantity(5);
+
+        when(orderItemService.getOrderItemsByOrderId(eq(1L), any())).thenReturn(List.of(i1, i2));
+
+        Stock s1 = new Stock();
+        s1.setId(200L);
+        Stock s2 = new Stock();
+        s2.setId(201L);
+        when(stockService.getStockByResourceAndWarehouse(10L, 1L)).thenReturn(Optional.of(s1));
+        when(stockService.getStockByResourceAndWarehouse(11L, 1L)).thenReturn(Optional.of(s2));
+
+        UpdateShipmentRequest req = new UpdateShipmentRequest();
+        req.setStatus("DELIVERED");
+
+        // When
+        shipmentService.updateShipment(1L, req);
+
+        // Then
+        verify(stockService, times(1)).adjustStock(eq(200L), argThat(a -> a != null && Integer.valueOf(-3).equals(a.getDelta())));
+        verify(stockService, times(1)).adjustStock(eq(201L), argThat(a -> a != null && Integer.valueOf(-5).equals(a.getDelta())));
+        verify(shipmentRepository, times(1)).save(any(Shipment.class));
+    }
+
+    @Test
+    void updateShipment_WhenAlreadyDelivered_ShouldNotDeductStockAgain() {
+        // Given
+        testShipment.setStatus("DELIVERED");
+        when(shipmentRepository.findById(1L)).thenReturn(Optional.of(testShipment));
+        when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
+
+        UpdateShipmentRequest req = new UpdateShipmentRequest();
+        req.setStatus("DELIVERED");
+
+        // When
+        shipmentService.updateShipment(1L, req);
+
+        // Then
+        verify(stockService, never()).adjustStock(anyLong(), any());
+        verify(orderItemService, never()).getOrderItemsByOrderId(anyLong(), any());
+        verify(shipmentRepository, times(1)).save(any(Shipment.class));
+    }
+
+    @Test
+    void updateShipment_WhenDeliverAndNoStockRecord_ShouldThrowConflict() {
+        // Given
+        when(shipmentRepository.findById(1L)).thenReturn(Optional.of(testShipment));
+
+        Resource r1 = new Resource();
+        r1.setId(10L);
+        OrderItem i1 = new OrderItem();
+        i1.setId(100L);
+        i1.setResource(r1);
+        i1.setQuantity(3);
+
+        when(orderItemService.getOrderItemsByOrderId(eq(1L), any())).thenReturn(List.of(i1));
+        when(stockService.getStockByResourceAndWarehouse(10L, 1L)).thenReturn(Optional.empty());
+
+        UpdateShipmentRequest req = new UpdateShipmentRequest();
+        req.setStatus("DELIVERED");
+
+        // When & Then
+        assertThatThrownBy(() -> shipmentService.updateShipment(1L, req))
+                .isInstanceOf(InsufficientStockException.class);
     }
 
     @Test
