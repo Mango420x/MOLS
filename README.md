@@ -2,185 +2,67 @@
 
 ![CI](https://github.com/Mango420x/MOLS/actions/workflows/ci.yml/badge.svg)
 
-**Short Description:**  
-A web-based logistics system for tracking resources, stock, and transport across land, sea, and air. Built for clear workflows and full traceability.
+Portfolio project: a web-based logistics system to manage resources, stock, orders, shipments, and movements with end-to-end traceability.
 
 ---
 
-## Overview
+## Highlights
 
-MOLS helps units request resources, warehouses manage stock, and teams coordinate shipments and vehicles. It keeps a complete history of what happened, when, and where.
-
-This is a portfolio-grade backend project focused on clean structure, traceability, and real-world logistics workflows.
-
-For deeper technical details, see [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md).
+- Stock + audit trail: every change records a Movement (`ENTRY` / `EXIT`)
+- Orders + items workflow (create, edit, inline item management)
+- Shipments lifecycle including fulfillment on delivery
+- Detail pages that link Orders/Shipments to related Movements (traceability)
 
 ---
 
 <details>
 <summary>Resumen en español (🇪🇸)</summary>
 
-MOLS es un proyecto de portfolio profesional que demuestra una arquitectura backend clara y mantenible para operaciones logísticas reales. Permite gestionar pedidos, stock, almacenes, vehículos y envíos, con trazabilidad completa de movimientos.
+MOLS es un proyecto de portfolio: un sistema web para gestionar stock, pedidos, envíos y auditoría de movimientos, con trazabilidad completa.
 
-La arquitectura se organiza en capas (API, servicios, datos y dominio), lo que facilita el mantenimiento, el testeo y la evolución del sistema. Para más detalle tecnico, consulta [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md).
+Para detalles técnicos y arquitectura, consulta [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md).
 </details>
 
 ---
 
-## Technologies (High-Level)
+## Tech Stack
 
-MOLS is built as a modern backend-first system:
-
-- **Java + Spring Boot** provide the core REST API and service layer.
-- **PostgreSQL** stores operational data with strong consistency.
-- **Maven** manages builds and dependencies.
-- **OpenAPI (Springdoc)** provides interactive API documentation via Swagger UI.
-- **Spring Security + JWT** secure the API with stateless authentication and role-based authorization.
-- **Thymeleaf + Bootstrap** provide a server-rendered admin UI (dashboard + CRUD workflows).
-- **Docker + Docker Compose** provide reproducible local runtime for app + PostgreSQL.
-
-These choices emphasize reliability, traceability, and long-term maintainability.
+- Java 21, Spring Boot 4 (Spring MVC)
+- PostgreSQL + Spring Data JPA (Hibernate)
+- Spring Security (JWT for API + session login for UI)
+- Thymeleaf + Bootstrap 5.3
+- OpenAPI/Swagger (springdoc)
+- Docker + Docker Compose
 
 ---
 
-## Architecture
-
-MOLS follows a clean, layered architecture that separates responsibilities and keeps the system predictable:
-
-- **API Layer**: REST controllers expose endpoints and handle HTTP concerns.
-- **Service Layer**: business rules and workflows live here.
-- **Data Layer**: repositories manage persistence and database access.
-- **Domain Model**: entities represent real-world logistics concepts.
-
-This structure keeps logic centralized, makes testing easier, and supports future growth.
-
----
-
-## What You Can Do
-
-- Create and track orders from units
-- Manage warehouses and stock levels
-- Assign vehicles and follow shipments
-- Keep a full audit trail of movements
-- Explore and test all endpoints through Swagger UI
-
----
-
-## Business Rules Status
-
-Currently enforced in the service layer:
-
-- Stock cannot go negative (invalid adjustments return HTTP 409)
-- Stock changes automatically create movement audit records (`ENTRY`/`EXIT`)
-- Order item quantity cannot exceed available stock (returns HTTP 409)
-
----
-
-## Security (JWT + Roles)
-
-MOLS now uses stateless JWT authentication:
-
-- Public endpoints:
-	- `POST /api/auth/register`
-	- `POST /api/auth/login`
-- Protected API rules:
-	- `GET /api/**` → authenticated users (`ADMIN` or `OPERATOR`)
-	- `POST/PUT/PATCH/DELETE /api/**` → `ADMIN` only
-
-Verified locally:
-
-- No token on protected GET returns `403`
-- Valid token on GET returns `200`
-- `OPERATOR` token on protected POST returns `403`
-
----
-
-## API Documentation (Swagger)
+## Links
 
 With the application running:
 
-- **Swagger UI**: http://localhost:8080/swagger-ui.html
-- **OpenAPI JSON**: http://localhost:8080/v3/api-docs
-
-Controllers are documented with OpenAPI annotations (`@Tag`, `@Operation`, `@ApiResponses`) for consistent endpoint docs.
-
-Notable stock operation:
-
-- `PATCH /api/stocks/{id}/adjust` adjusts quantity by delta and records movement automatically.
+- UI: http://localhost:8080/ui
+- Swagger UI: http://localhost:8080/swagger-ui.html
 
 ---
 
-## UI Base (Thymeleaf)
+## Docs
 
-With the application running:
-
-- **Dashboard**: http://localhost:8080/ui
-- **Root redirect**: http://localhost:8080/ (redirects to `/ui`)
-
-Current Thymeleaf base includes:
-
-- Dashboard summary cards
-- CRUD screens for warehouses, resources, vehicles, units, shipments, and orders
-- Stock management (create + adjust) and audit log (movements)
-- Orders UX: click an Order ID to expand items inside the table; create/edit orders with inline items
-- Dark mode toggle
-
-Note: the UI routes under `/ui/**` are currently publicly accessible for demo/admin simplicity. The REST API under `/api/**` remains JWT-protected.
+- Technical details: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)
+- Local run / troubleshooting: [HELP.md](HELP.md)
 
 ---
 
-## Getting Started
+## Run (quick)
 
-1. Clone the repository.
-2. Configure the database in `application.properties`.
-3. Run:
-	```powershell
-	./mvnw.cmd clean compile
-	./mvnw.cmd spring-boot:run
-	```
-4. Open:
-	- APP UI: http://localhost:8080
-	- Swagger UI: http://localhost:8080/swagger-ui.html
+```powershell
+./mvnw.cmd spring-boot:run
+```
 
----
-
-## Run with Docker
-
-This repository includes:
-
-- `Dockerfile` (multi-stage image build)
-- `docker-compose.yml` (app + PostgreSQL stack)
-
-Run everything with:
+Or with Docker:
 
 ```powershell
 docker compose up --build -d
 ```
-
-Useful commands:
-
-```powershell
-docker compose ps
-docker compose logs -f app
-docker compose down
-```
-
-Ports:
-
-- App: `8080` (host) → `8080` (container)
-- Postgres: `5433` (host) → `5432` (container)
-
----
-
-## Testing
-
-Run all tests with:
-
-```powershell
-./mvnw.cmd test
-```
-
-Current local status: full suite passing (`138` tests).
 
 ---
 

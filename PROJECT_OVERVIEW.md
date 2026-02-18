@@ -17,6 +17,7 @@
 - **Build**: Maven wrapper present (`mvnw`, `mvnw.cmd`); build artifacts in `target/`.
 - **CI**: GitHub Actions workflow configured at `.github/workflows/ci.yml` (build + tests on push/PR to `main`).
 - **Security**: JWT-based authentication and role-based authorization enabled (`/api/auth/register`, `/api/auth/login`).
+- **UI Security**: Form login + session authentication enabled for `/ui/**` (`/ui/login`, `/ui/logout`) with CSRF protection.
 - **UI**: Thymeleaf + Bootstrap 5.3 admin interface under `/ui/**` (dark mode supported).
 - **Testing**: Controller and service test suites implemented and passing locally via Maven.
 - **Containerization**: Docker multi-stage build + Docker Compose orchestration available for app + database.
@@ -102,18 +103,22 @@ The project includes a server-rendered admin UI built with Thymeleaf.
 - **Static assets**: `src/main/resources/static/*`
 - **Theme**: Bootstrap 5.3 color modes (dark mode toggle)
 
-**UI Routes (public)**:
+**UI Routes (authenticated)**:
 - Dashboard: `/ui`
+- Login: `/ui/login`
+- Logout (POST): `/ui/logout`
 - Warehouses: `/ui/warehouses`
 - Resources: `/ui/resources`
 - Vehicles: `/ui/vehicles`
 - Stock: `/ui/stocks` (create + adjust + delete)
 - Audit log: `/ui/movements`
 - Orders: `/ui/orders` (expand items in-table; create/edit with inline items)
+- Order detail: `/ui/orders/{id}` (shipments + linked movements)
 - Shipments: `/ui/shipments`
+- Shipment detail: `/ui/shipments/{id}` (order context + linked movements)
 - Units: `/ui/units`
 
-**Security note**: `/api/**` remains JWT-protected; `/ui/**` is currently allowed without login for demo/admin simplicity.
+**Security note**: `/api/**` remains JWT-protected; `/ui/**` requires a logged-in user via form login/session.
 
 ### Configuration
 - **Database**: PostgreSQL configured in `src/main/resources/application.properties`
@@ -133,6 +138,41 @@ The project includes a server-rendered admin UI built with Thymeleaf.
     - Authorization model:
        - `GET /api/**` requires authenticated token (ADMIN or OPERATOR)
        - `POST/PUT/PATCH/DELETE /api/**` requires role `ADMIN`
+- **UI Security**:
+   - `/ui/**` uses Spring Security form login + server-side session
+   - CSRF protection enabled for UI forms
+   - Template conditional rendering uses Thymeleaf Spring Security dialect (`thymeleaf-extras-springsecurity6`)
+- **Bootstrap admin** (dev): can create an initial ADMIN user if none exists (see `application.properties`).
+
+### Operational Notes (Local Dev)
+
+#### UI users vs PostgreSQL roles
+
+The UI login uses **application users** stored in the `app_users` table.
+These are not the same as PostgreSQL roles/users you create in pgAdmin.
+
+#### Bootstrap admin (dev)
+
+The application can create an initial `ADMIN` user on startup **only if no `ADMIN` exists**.
+Defaults can be overridden via environment variables:
+
+- `BOOTSTRAP_ADMIN_ENABLED`
+- `BOOTSTRAP_ADMIN_USERNAME`
+- `BOOTSTRAP_ADMIN_PASSWORD`
+
+Passwords are stored hashed (BCrypt).
+
+#### Reset an application user password (PostgreSQL)
+
+If you don't know the current password, reset it directly in the DB using `pgcrypto`:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+UPDATE app_users
+SET password = crypt('NEW_PASSWORD', gen_salt('bf', 10))
+WHERE username = 'admin';
+```
 - **Docker**:
    - `Dockerfile` uses multi-stage build (`eclipse-temurin:21-jdk` → `eclipse-temurin:21-jre`)
    - `docker-compose.yml` orchestrates `mols-app` + `mols-db` with healthcheck
@@ -206,7 +246,7 @@ These rules are **enforced in services**, not controllers:
 1. Stock must never go negative
 2. Order items must not exceed available stock (validated against total availability)
 3. Every stock change must generate a Movement record
-4. Shipment/order fulfillment automation remains planned (linking order items → shipment → stock exit)
+4. Shipment delivery triggers fulfillment: transitioning a shipment to `DELIVERED` deducts stock (EXIT) per order items and records movements.
 
 ### Current Enforcement Status
 
@@ -217,7 +257,19 @@ These rules are **enforced in services**, not controllers:
    - Rejects order items where requested quantity exceeds total available stock (`InsufficientStockException`, HTTP 409)
 - ✅ Rule 3 implemented in `StockService.adjustStock()` and `StockService.createStock()`
    - Every stock increase/decrease records a `Movement` (`ENTRY`/`EXIT`) automatically
-- 🚧 Rule 4 remains planned for future phases.
+- ✅ Rule 4 implemented in `ShipmentService` on transition to `DELIVERED`
+   - Deducts stock per order items and records `EXIT` movements
+   - Prevents invalid transitions (e.g., reverting DELIVERED)
+
+### Traceability Enhancements
+
+Movements can optionally be linked to:
+
+- an `orderId`
+- a `shipmentId`
+- a free-text `reason`
+
+These fields are used by the UI detail pages to show end-to-end traceability.
 
 ## Developer Guidelines
 
