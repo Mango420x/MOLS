@@ -4,6 +4,7 @@ import com.mls.logistics.security.domain.AppUser;
 import com.mls.logistics.security.domain.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -36,4 +37,10 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
      * @return true if at least one user exists with the given role
      */
     boolean existsByRole(Role role);
+
+    long countByRoleAndEnabledTrue(Role role);
+
+    long countByEnabledTrue();
+
+    List<AppUser> findAllByRole(Role role);
 }

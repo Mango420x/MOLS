@@ -44,6 +44,8 @@ services:
       SPRING_DATASOURCE_USERNAME: logistics_user
       SPRING_DATASOURCE_PASSWORD: logistics123
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # First-run setup: start with NO users and force creating the first ADMIN via /ui/setup
+      BOOTSTRAP_ADMIN_ENABLED: "false"
     depends_on:
       db:
         condition: service_healthy   # Wait for PostgreSQL to be ready before starting app

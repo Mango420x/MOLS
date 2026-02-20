@@ -35,6 +35,16 @@ public class AppUser implements UserDetails {
     @Column(nullable = false)
     private Role role;
 
+    /**
+     * Account enabled flag.
+     *
+     * Nullable on purpose for upgrade compatibility: when introducing this column
+     * into an existing database, adding a NOT NULL column can fail.
+     * Treat null as enabled and backfill to true on startup.
+     */
+    @Column
+    private Boolean enabled;
+
     public AppUser() {
     }
 
@@ -42,6 +52,7 @@ public class AppUser implements UserDetails {
         this.username = username;
         this.password = password;
         this.role = role;
+        this.enabled = Boolean.TRUE;
     }
 
     // UserDetails implementation
@@ -78,7 +89,7 @@ public class AppUser implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled == null || enabled;
     }
 
     // Getters and setters
@@ -105,5 +116,13 @@ public class AppUser implements UserDetails {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public boolean isEnabledFlag() {
+        return enabled == null || enabled;
+    }
+
+    public void setEnabledFlag(boolean enabled) {
+        this.enabled = enabled;
     }
 }

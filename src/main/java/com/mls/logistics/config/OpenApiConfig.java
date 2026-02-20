@@ -36,6 +36,7 @@ public class OpenApiConfig {
                                 Roles:
                                 - ADMIN: full access (GET, POST, PUT, PATCH, DELETE)
                                 - OPERATOR: read only (GET)
+                                - AUDITOR: read only (GET)
                                 """)
                         .contact(new Contact()
                                 .name("MOLS Development")

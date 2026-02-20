@@ -35,12 +35,15 @@ UI:
 
 Public endpoints:
 
-- POST /api/auth/register
 - POST /api/auth/login
+
+Admin-only:
+
+- POST /api/auth/register (no public self-signup)
 
 Protected endpoint policy:
 
-- GET /api/** requires authenticated token (ADMIN or OPERATOR)
+- GET /api/** requires authenticated token (ADMIN / OPERATOR / AUDITOR)
 - POST/PUT/PATCH/DELETE /api/** requires ADMIN
 
 JWT settings in application.properties:
@@ -51,6 +54,16 @@ JWT settings in application.properties:
 ## UI Login (Session)
 
 The `/ui/**` area uses form login + session authentication.
+
+Roles:
+
+- ADMIN: full access + user management
+- OPERATOR: can create/edit Orders and Shipments (no deletes, no master data changes)
+- AUDITOR: read-only
+
+Admin UI:
+
+- Users management: http://localhost:8080/ui/users (ADMIN only)
 
 Application users are stored in PostgreSQL table `app_users` (not PostgreSQL roles).
 

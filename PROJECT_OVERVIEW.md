@@ -16,7 +16,7 @@
 - **API Docs**: OpenAPI + Swagger UI configured (`OpenApiConfig`) and available at `/swagger-ui.html` and `/v3/api-docs`.
 - **Build**: Maven wrapper present (`mvnw`, `mvnw.cmd`); build artifacts in `target/`.
 - **CI**: GitHub Actions workflow configured at `.github/workflows/ci.yml` (build + tests on push/PR to `main`).
-- **Security**: JWT-based authentication and role-based authorization enabled (`/api/auth/register`, `/api/auth/login`).
+- **Security**: JWT-based authentication and role-based authorization enabled (`/api/auth/login`; `/api/auth/register` is ADMIN-only).
 - **UI Security**: Form login + session authentication enabled for `/ui/**` (`/ui/login`, `/ui/logout`) with CSRF protection.
 - **UI**: Thymeleaf + Bootstrap 5.3 admin interface under `/ui/**` (dark mode supported).
 - **Testing**: Controller and service test suites implemented and passing locally via Maven.
@@ -131,12 +131,13 @@ The project includes a server-rendered admin UI built with Thymeleaf.
    - JSON spec: `http://localhost:8080/v3/api-docs`
    - Springdoc properties configured in `application.properties`
 - **Security/JWT**:
-    - Public auth endpoints: `POST /api/auth/register`, `POST /api/auth/login`
+   - Public auth endpoint: `POST /api/auth/login`
+   - Admin-only: `POST /api/auth/register` (no public self-signup)
     - JWT properties in `application.properties`:
        - `security.jwt.secret-key`
        - `security.jwt.expiration-ms`
     - Authorization model:
-       - `GET /api/**` requires authenticated token (ADMIN or OPERATOR)
+       - `GET /api/**` requires authenticated token (ADMIN / OPERATOR / AUDITOR)
        - `POST/PUT/PATCH/DELETE /api/**` requires role `ADMIN`
 - **UI Security**:
    - `/ui/**` uses Spring Security form login + server-side session

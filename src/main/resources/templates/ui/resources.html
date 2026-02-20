@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/head :: head('Resources')}"></head>
 <body class="bg-body-tertiary">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
@@ -11,7 +11,7 @@
         <main class="col-12 col-lg-10 px-3 px-md-4 py-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h1 class="h3 mb-0">Resources</h1>
-                <a class="btn btn-primary" th:href="@{/ui/resources/new}">
+                <a class="btn btn-primary" sec:authorize="hasRole('ADMIN')" th:href="@{/ui/resources/new}">
                     <i class="bi bi-plus-lg me-1"></i>
                     New resource
                 </a>
@@ -74,17 +74,19 @@
                                 </span>
                             </td>
                             <td class="text-end">
-                                <a class="btn btn-sm btn-outline-primary"
-                                   th:href="@{/ui/resources/{id}/edit(id=${resource.id})}">
-                                    Edit
-                                </a>
-                                <form class="d-inline"
-                                      th:action="@{/ui/resources/{id}/delete(id=${resource.id})}"
-                                      method="post"
-                                      onsubmit="return confirm('Delete this resource?');">
-                                                                        <div th:replace="~{fragments/csrf :: csrf}"></div>
-                                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-                                </form>
+                                <th:block sec:authorize="hasRole('ADMIN')">
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       th:href="@{/ui/resources/{id}/edit(id=${resource.id})}">
+                                        Edit
+                                    </a>
+                                    <form class="d-inline"
+                                          th:action="@{/ui/resources/{id}/delete(id=${resource.id})}"
+                                          method="post"
+                                          onsubmit="return confirm('Delete this resource?');">
+                                        <div th:replace="~{fragments/csrf :: csrf}"></div>
+                                        <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                                    </form>
+                                </th:block>
                             </td>
                         </tr>
                         </tbody>

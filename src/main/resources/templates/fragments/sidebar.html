@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <body>
 <nav class="col-lg-2 d-none d-lg-block border-end bg-body" th:fragment="sidebar(active)">
     <div class="p-3">
@@ -55,6 +55,7 @@
                th:href="@{/ui/units}">
                 <i class="bi bi-diagram-3 me-1"></i> Units
             </a>
+
         </div>
     </div>
 </nav>

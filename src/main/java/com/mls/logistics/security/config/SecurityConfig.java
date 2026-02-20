@@ -59,11 +59,15 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints — no token required
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                // Registration is ADMIN-only (no public self-signup)
+                .requestMatchers(HttpMethod.POST, "/api/auth/register").hasRole("ADMIN")
+                // Block any other auth endpoints by default
+                .requestMatchers("/api/auth/**").denyAll()
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**",
                     "/v3/api-docs/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
-                // Read operations — any authenticated user (ADMIN or OPERATOR)
+                // Read operations — any authenticated user (ADMIN/OPERATOR/AUDITOR)
                 .requestMatchers(HttpMethod.GET, "/api/**").authenticated()
                 // Write operations — ADMIN only
                 .requestMatchers(HttpMethod.POST, "/api/**").hasRole("ADMIN")
@@ -94,8 +98,37 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/ui/login").permitAll()
+                .requestMatchers("/ui/setup").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
                 .requestMatchers("/").permitAll()
+
+                // Admin-only module
+                .requestMatchers("/ui/users/**").hasRole("ADMIN")
+
+                // Admin-only master data + stock operations (pages)
+                .requestMatchers(
+                    "/ui/warehouses/new", "/ui/warehouses/*/edit",
+                    "/ui/resources/new", "/ui/resources/*/edit",
+                    "/ui/vehicles/new", "/ui/vehicles/*/edit",
+                    "/ui/units/new", "/ui/units/*/edit",
+                    "/ui/stocks/new", "/ui/stocks/*/adjust"
+                ).hasRole("ADMIN")
+
+                // Operational screens (pages)
+                .requestMatchers(
+                    "/ui/orders/new", "/ui/orders/*/edit",
+                    "/ui/shipments/new", "/ui/shipments/*/edit"
+                ).hasAnyRole("ADMIN", "OPERATOR")
+
+                // UI write actions: allow OPERATOR only for Orders/Shipments
+                .requestMatchers(HttpMethod.POST, "/ui/orders/*/delete").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/ui/shipments/*/delete").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/ui/orders/**").hasAnyRole("ADMIN", "OPERATOR")
+                .requestMatchers(HttpMethod.POST, "/ui/shipments/**").hasAnyRole("ADMIN", "OPERATOR")
+                .requestMatchers(HttpMethod.POST, "/ui/logout").authenticated()
+                .requestMatchers(HttpMethod.POST, "/ui/**").hasRole("ADMIN")
+
+                // Everything else under UI requires authentication
                 .requestMatchers("/ui/**").authenticated()
                 .anyRequest().authenticated())
             .formLogin(form -> form
