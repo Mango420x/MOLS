@@ -5,7 +5,6 @@ import com.mls.logistics.security.domain.Role;
 import com.mls.logistics.security.repository.AppUserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,27 +24,26 @@ public class BootstrapAdminUserRunner implements ApplicationRunner {
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
 
-    private final boolean enabled;
-    private final String username;
-    private final String password;
+    private final BootstrapAdminProperties bootstrapAdminProperties;
 
     public BootstrapAdminUserRunner(
             AppUserRepository appUserRepository,
             PasswordEncoder passwordEncoder,
-            @Value("${security.bootstrap.admin.enabled:true}") boolean enabled,
-            @Value("${security.bootstrap.admin.username:admin}") String username,
-            @Value("${security.bootstrap.admin.password:admin}") String password) {
+            BootstrapAdminProperties bootstrapAdminProperties) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
-        this.enabled = enabled;
-        this.username = username;
-        this.password = password;
+        this.bootstrapAdminProperties = bootstrapAdminProperties;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        if (!enabled) {
+        if (!bootstrapAdminProperties.isEnabled()) {
             log.info("Bootstrap admin user is disabled (security.bootstrap.admin.enabled=false).");
+            return;
+        }
+
+        if (appUserRepository.count() > 0) {
+            log.info("Skipping bootstrap admin creation because at least one user already exists.");
             return;
         }
 
@@ -56,6 +54,7 @@ public class BootstrapAdminUserRunner implements ApplicationRunner {
             log.warn("No ADMIN user found in the database.");
         }
 
+        var username = bootstrapAdminProperties.getUsername();
         var existingUsername = appUserRepository.findByUsername(username);
         if (existingUsername.isPresent()) {
             log.info("Bootstrap user '{}' already exists with role {}. Skipping creation.", username, existingUsername.get().getRole());
@@ -67,7 +66,7 @@ public class BootstrapAdminUserRunner implements ApplicationRunner {
             return;
         }
 
-        AppUser user = new AppUser(username, passwordEncoder.encode(password), Role.ADMIN);
+        AppUser user = new AppUser(username, passwordEncoder.encode(bootstrapAdminProperties.getPassword()), Role.ADMIN);
         appUserRepository.save(user);
 
         log.warn("Created bootstrap ADMIN user '{}' (password configured via security.bootstrap.admin.password / env). Change it immediately.", username);
