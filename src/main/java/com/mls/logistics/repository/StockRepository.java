@@ -3,6 +3,7 @@ package com.mls.logistics.repository;
 import com.mls.logistics.domain.Stock;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -32,4 +33,8 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
      * @return list of stock records for this resource
      */
     java.util.List<Stock> findByResourceId(Long resourceId);
+
+    List<Stock> findByQuantityLessThan(int threshold);
+
+    long countByQuantityLessThan(int threshold);
 }

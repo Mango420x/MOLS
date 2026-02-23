@@ -11,4 +11,6 @@ import java.util.List;
  */
 public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
     List<Shipment> findByOrderId(Long orderId, Sort sort);
+
+    long countByStatus(String status);
 }

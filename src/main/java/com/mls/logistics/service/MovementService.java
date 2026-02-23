@@ -10,8 +10,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service layer for Movement-related business operations.
@@ -162,5 +166,23 @@ public class MovementService {
             throw new ResourceNotFoundException("Movement", "id", id);
         }
         movementRepository.deleteById(id);
+    }
+
+    public List<Movement> getRecentMovements() {
+        return movementRepository.findTop15ByOrderByDateTimeDesc();
+    }
+
+    public long countByDateTimeAfter(LocalDateTime since) {
+        return movementRepository.countByDateTimeAfter(since);
+    }
+
+    public Map<String, Long> getMovementCountByType(LocalDateTime since) {
+        return movementRepository.findByDateTimeAfter(since)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        m -> m.getType() == null ? "UNKNOWN" : m.getType().trim().toUpperCase(),
+                        LinkedHashMap::new,
+                        Collectors.counting()
+                ));
     }
 }

@@ -16,8 +16,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service layer for Stock-related business operations.
@@ -187,6 +191,43 @@ public class StockService {
                 .stream()
                 .mapToInt(Stock::getQuantity)
                 .sum();
+    }
+
+    /**
+     * Aggregates current stock quantity by warehouse name.
+     *
+     * This is used by the dashboard to render the stock distribution chart.
+     */
+    public Map<String, Long> getStockQuantityByWarehouse() {
+        Map<String, Long> aggregated = stockRepository.findAll()
+                .stream()
+                .filter(s -> s.getWarehouse() != null)
+                .collect(Collectors.groupingBy(
+                        s -> {
+                            String name = s.getWarehouse().getName();
+                            return (name == null || name.isBlank()) ? "(Unnamed)" : name;
+                        },
+                        Collectors.summingLong(s -> (long) s.getQuantity())
+                ));
+
+        return aggregated.entrySet()
+                .stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue(Comparator.reverseOrder())
+                        .thenComparing(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER)))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+    }
+
+    public long countByQuantityLessThan(int threshold) {
+        return stockRepository.countByQuantityLessThan(threshold);
+    }
+
+    public List<Stock> getLowStockItems(int threshold) {
+        return stockRepository.findByQuantityLessThan(threshold);
     }
 
     /**

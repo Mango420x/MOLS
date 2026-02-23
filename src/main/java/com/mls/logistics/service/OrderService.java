@@ -11,6 +11,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -153,5 +157,44 @@ public class OrderService {
             throw new ResourceNotFoundException("Order", "id", id);
         }
         orderRepository.deleteById(id);
+    }
+
+    public long getTotalOrdersCount() {
+        return orderRepository.count();
+    }
+
+    public long countByStatus(String status) {
+        return orderRepository.countByStatus(status);
+    }
+
+    /**
+     * Fulfillment rate as a percentage of completed orders vs total orders.
+     */
+    public double getFulfillmentRate() {
+        long total = orderRepository.count();
+        if (total == 0) {
+            return 0.0;
+        }
+
+        long completed = orderRepository.countByStatus("COMPLETED");
+        return (completed * 100.0) / total;
+    }
+
+    /**
+     * Returns pending orders older than the provided threshold (in days).
+     *
+     * The system currently uses CREATED and VALIDATED as pre-fulfillment statuses.
+     */
+    public List<Order> getStaleOrders(int daysThreshold) {
+        LocalDate cutoff = LocalDate.now().minus(daysThreshold, ChronoUnit.DAYS);
+
+        List<Order> results = new ArrayList<>();
+        results.addAll(orderRepository.findByStatusAndDateCreatedBefore("CREATED", cutoff));
+        results.addAll(orderRepository.findByStatusAndDateCreatedBefore("VALIDATED", cutoff));
+
+        results.sort(Comparator
+                .comparing(Order::getDateCreated, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(Order::getId, Comparator.nullsLast(Comparator.naturalOrder())));
+        return results;
     }
 }

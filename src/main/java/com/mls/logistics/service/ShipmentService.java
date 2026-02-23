@@ -225,6 +225,10 @@ public class ShipmentService {
         shipmentRepository.deleteById(id);
     }
 
+    public long countByStatus(String status) {
+        return shipmentRepository.countByStatus(status);
+    }
+
     /**
      * Executes shipment fulfillment.
      *

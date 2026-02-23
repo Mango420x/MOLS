@@ -17,9 +17,9 @@
 - **Build**: Maven wrapper present (`mvnw`, `mvnw.cmd`); build artifacts in `target/`.
 - **CI**: GitHub Actions workflow configured at `.github/workflows/ci.yml` (build + tests on push/PR to `main`).
 - **Security**: JWT-based authentication and role-based authorization enabled (`/api/auth/login`; `/api/auth/register` is ADMIN-only).
-- **UI Security**: Form login + session authentication enabled for `/ui/**` (`/ui/login`, `/ui/logout`) with CSRF protection.
+- **UI Security**: Form login + session authentication enabled for `/ui/**` (`/ui/login`, `/ui/logout`), with a first-run setup page (`/ui/setup`) and an ADMIN-only users module (`/ui/users/**`).
 - **UI**: Thymeleaf + Bootstrap 5.3 admin interface under `/ui/**` (dark mode supported).
-- **Testing**: Controller and service test suites implemented and passing locally via Maven.
+- **Testing**: Controller and service test suites implemented and passing locally via Maven (`./mvnw.cmd test`).
 - **Containerization**: Docker multi-stage build + Docker Compose orchestration available for app + database.
 - **Business Rules**: Core stock/order constraints already enforced in services (non-negative stock, automatic movement audit, order item stock ceiling).
 
@@ -103,9 +103,10 @@ The project includes a server-rendered admin UI built with Thymeleaf.
 - **Static assets**: `src/main/resources/static/*`
 - **Theme**: Bootstrap 5.3 color modes (dark mode toggle)
 
-**UI Routes (authenticated)**:
+**UI Routes**:
 - Dashboard: `/ui`
 - Login: `/ui/login`
+- First-run setup: `/ui/setup` (only when no users exist)
 - Logout (POST): `/ui/logout`
 - Warehouses: `/ui/warehouses`
 - Resources: `/ui/resources`
@@ -117,8 +118,38 @@ The project includes a server-rendered admin UI built with Thymeleaf.
 - Shipments: `/ui/shipments`
 - Shipment detail: `/ui/shipments/{id}` (order context + linked movements)
 - Units: `/ui/units`
+- Users (ADMIN-only): `/ui/users` (create users, change roles, reset passwords, enable/disable)
 
-**Security note**: `/api/**` remains JWT-protected; `/ui/**` requires a logged-in user via form login/session.
+#### Dashboard (Operational)
+
+The `/ui` dashboard is operational and data-driven (not decorative). It shows:
+
+- KPI cards with context (pending orders badge, fulfillment target flag, etc.)
+- Charts (Chart.js v4) with safe fallbacks when the database has little/no historical data
+- Recent activity (last 15 movements)
+- Actionable alerts:
+   - Low stock items with direct link to the stock adjust screen
+   - Stale pending orders with direct link to the order detail page
+
+**Note about statuses**: the current domain model uses string statuses. “Pending” on the dashboard maps to `CREATED + VALIDATED`.
+
+Dashboard thresholds are configurable via `mols.dashboard.*` in `application.properties`:
+
+- `mols.dashboard.low-stock-threshold`
+- `mols.dashboard.critical-stock-threshold`
+- `mols.dashboard.low-stock-list-limit`
+- `mols.dashboard.stale-order-days`
+- `mols.dashboard.stale-orders-list-limit`
+- `mols.dashboard.recent-activity-hours`
+- `mols.dashboard.movement-chart-days`
+- `mols.dashboard.fulfillment-target-percent`
+
+Implementation notes:
+
+- Aggregations live in services (no repository access in `UiController`).
+- Recent movements query uses an `@EntityGraph` to avoid N+1 during view rendering.
+
+**Security note**: `/api/**` remains JWT-protected. The UI uses form login + session auth; most `/ui/**` routes require login, with `/ui/login` and `/ui/setup` public.
 
 ### Configuration
 - **Database**: PostgreSQL configured in `src/main/resources/application.properties`
@@ -147,6 +178,11 @@ The project includes a server-rendered admin UI built with Thymeleaf.
 
 ### Operational Notes (Local Dev)
 
+#### First-run UI setup
+
+If there are no application users in the database, `/ui/login` redirects to `/ui/setup`.
+This page allows creating the first `ADMIN` account.
+
 #### UI users vs PostgreSQL roles
 
 The UI login uses **application users** stored in the `app_users` table.
@@ -162,6 +198,10 @@ Defaults can be overridden via environment variables:
 - `BOOTSTRAP_ADMIN_PASSWORD`
 
 Passwords are stored hashed (BCrypt).
+
+#### User enable/disable safety
+
+Application users can be enabled/disabled (e.g., via the admin UI). For safety when upgrading an existing database schema, the application includes a startup runner that prevents accidental lock-out by ensuring at least one enabled `ADMIN` exists.
 
 #### Reset an application user password (PostgreSQL)
 
@@ -480,4 +520,4 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
    - Add unit/integration tests (controller + service + repository)
    - Review validation rules for all request DTOs
 
-**Last updated**: 2026-02-18
+**Last updated**: 2026-02-23

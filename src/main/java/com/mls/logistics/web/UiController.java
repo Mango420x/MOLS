@@ -1,5 +1,8 @@
 package com.mls.logistics.web;
 
+import com.mls.logistics.config.DashboardProperties;
+import com.mls.logistics.domain.Order;
+import com.mls.logistics.domain.Stock;
 import com.mls.logistics.service.OrderService;
 import com.mls.logistics.service.OrderItemService;
 import com.mls.logistics.service.MovementService;
@@ -45,10 +48,13 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Comparator;
 
 /**
  * Thymeleaf UI controller for the admin web interface.
@@ -77,6 +83,7 @@ public class UiController {
     private final ShipmentService shipmentService;
     private final StockService stockService;
     private final MovementService movementService;
+    private final DashboardProperties dashboardProperties;
 
     public UiController(WarehouseService warehouseService,
                         VehicleService vehicleService,
@@ -86,7 +93,8 @@ public class UiController {
                         ResourceService resourceService,
                         ShipmentService shipmentService,
                         StockService stockService,
-                        MovementService movementService) {
+                        MovementService movementService,
+                        DashboardProperties dashboardProperties) {
         this.warehouseService = warehouseService;
         this.vehicleService = vehicleService;
         this.orderService = orderService;
@@ -96,6 +104,7 @@ public class UiController {
         this.shipmentService = shipmentService;
         this.stockService = stockService;
         this.movementService = movementService;
+        this.dashboardProperties = dashboardProperties;
     }
 
     /**
@@ -113,10 +122,125 @@ public class UiController {
      */
     @GetMapping("/ui")
     public String dashboard(Model model) {
-        model.addAttribute("warehouseCount", safeCount(() -> warehouseService.getAllWarehouses().size(), model));
-        model.addAttribute("vehicleCount", safeCount(() -> vehicleService.getAllVehicles().size(), model));
-        model.addAttribute("orderCount", safeCount(() -> orderService.getAllOrders().size(), model));
-        model.addAttribute("unitCount", safeCount(() -> unitService.getAllUnits().size(), model));
+        int lowStockThreshold = dashboardProperties.getLowStockThreshold();
+        int criticalStockThreshold = dashboardProperties.getCriticalStockThreshold();
+
+        long totalOrders = safeLong(orderService::getTotalOrdersCount, model);
+        long completedOrders = safeLong(() -> orderService.countByStatus("COMPLETED"), model);
+        long pendingOrders = safeLong(() -> orderService.countByStatus("CREATED") + orderService.countByStatus("VALIDATED"), model);
+
+        long activeShipments = safeLong(() -> shipmentService.countByStatus("IN_TRANSIT"), model);
+
+        Map<String, Long> stockByWarehouse = safeMap(stockService::getStockQuantityByWarehouse, model);
+        long totalStockQuantity = stockByWarehouse.values().stream().mapToLong(Long::longValue).sum();
+        int stockWarehouseCount = stockByWarehouse.size();
+
+        long lowStockCount = safeLong(() -> stockService.countByQuantityLessThan(lowStockThreshold), model);
+
+        LocalDateTime now = LocalDateTime.now();
+        long recentMovementsCount = safeLong(
+            () -> movementService.countByDateTimeAfter(now.minusHours(dashboardProperties.getRecentActivityHours())),
+            model
+        );
+
+        double fulfillmentRatePercent = safeDouble(orderService::getFulfillmentRate, model);
+        boolean fulfillmentTargetMet = fulfillmentRatePercent >= dashboardProperties.getFulfillmentTargetPercent();
+
+        // Recent movements (table)
+        List<com.mls.logistics.domain.Movement> recentMovements = safeList(movementService::getRecentMovements, model);
+
+        // Alerts: low stock
+        List<Stock> lowStockItemsRaw = safeList(() -> stockService.getLowStockItems(lowStockThreshold), model);
+        lowStockItemsRaw.sort(Comparator
+            .comparingInt(Stock::getQuantity)
+            .thenComparing(Stock::getId, Comparator.nullsLast(Comparator.naturalOrder())));
+        int lowStockLimit = dashboardProperties.getLowStockListLimit();
+        List<Stock> lowStockItems = lowStockItemsRaw.stream().limit(lowStockLimit).toList();
+
+        // Alerts: stale orders
+        List<Order> staleOrdersRaw = safeList(() -> orderService.getStaleOrders(dashboardProperties.getStaleOrderDays()), model);
+        LocalDate today = LocalDate.now();
+        List<StaleOrderView> staleOrdersView = new ArrayList<>();
+        for (Order order : staleOrdersRaw) {
+            long daysPending = 0;
+            if (order.getDateCreated() != null) {
+            daysPending = ChronoUnit.DAYS.between(order.getDateCreated(), today);
+            }
+            String unitName = (order.getUnit() != null && order.getUnit().getName() != null)
+                ? order.getUnit().getName()
+                : "—";
+            staleOrdersView.add(new StaleOrderView(order.getId(), unitName, daysPending));
+        }
+        staleOrdersView.sort(Comparator
+            .comparingLong(StaleOrderView::daysPending).reversed()
+            .thenComparing(StaleOrderView::orderId, Comparator.nullsLast(Comparator.naturalOrder())));
+        int staleLimit = dashboardProperties.getStaleOrdersListLimit();
+        List<StaleOrderView> staleOrders = staleOrdersView.stream().limit(staleLimit).toList();
+
+        // Charts
+        List<String> stockWarehouseLabels = new ArrayList<>(stockByWarehouse.keySet());
+        List<Long> stockWarehouseValues = stockWarehouseLabels.stream().map(stockByWarehouse::get).toList();
+
+        Map<String, Long> movementsByType = safeMap(
+            () -> movementService.getMovementCountByType(now.minusDays(dashboardProperties.getMovementChartDays())),
+            model
+        );
+        long entryCount = movementsByType.getOrDefault("ENTRY", 0L);
+        long exitCount = movementsByType.getOrDefault("EXIT", 0L);
+        long adjustmentCount = movementsByType.getOrDefault("ADJUSTMENT", 0L);
+        long movementsTotal = entryCount + exitCount + adjustmentCount;
+
+        long cancelledOrders = safeLong(() -> orderService.countByStatus("CANCELLED"), model);
+
+        Map<String, Object> chartData = new HashMap<>();
+        chartData.put("stockByWarehouse", Map.of(
+            "labels", stockWarehouseLabels,
+            "values", stockWarehouseValues
+        ));
+        chartData.put("movementsByType", Map.of(
+            "labels", List.of("ENTRY", "EXIT", "ADJUSTMENT"),
+            "values", List.of(entryCount, exitCount, adjustmentCount),
+            "total", movementsTotal
+        ));
+        chartData.put("ordersByStatus", Map.of(
+            "labels", List.of("PENDING", "COMPLETED", "CANCELLED"),
+            "values", List.of(pendingOrders, completedOrders, cancelledOrders)
+        ));
+
+        model.addAttribute("totalOrders", totalOrders);
+        model.addAttribute("pendingOrders", pendingOrders);
+
+        model.addAttribute("totalStockQuantity", totalStockQuantity);
+        model.addAttribute("stockWarehouseCount", stockWarehouseCount);
+
+        model.addAttribute("activeShipments", activeShipments);
+        model.addAttribute("lowStockCount", lowStockCount);
+        model.addAttribute("recentMovementsCount", recentMovementsCount);
+
+        model.addAttribute("fulfillmentRatePercent", fulfillmentRatePercent);
+        model.addAttribute("fulfillmentTargetMet", fulfillmentTargetMet);
+        model.addAttribute("fulfillmentTargetPercent", dashboardProperties.getFulfillmentTargetPercent());
+
+        model.addAttribute("recentMovements", recentMovements);
+
+        model.addAttribute("lowStockItems", lowStockItems);
+        model.addAttribute("lowStockTotalCount", lowStockCount);
+        model.addAttribute("lowStockThreshold", lowStockThreshold);
+        model.addAttribute("criticalStockThreshold", criticalStockThreshold);
+        model.addAttribute("lowStockLimit", lowStockLimit);
+
+        model.addAttribute("staleOrders", staleOrders);
+        model.addAttribute("staleOrdersDays", dashboardProperties.getStaleOrderDays());
+
+        model.addAttribute("chartData", chartData);
+
+        model.addAttribute("hasOrders", totalOrders > 0);
+        model.addAttribute("hasStock", !stockWarehouseLabels.isEmpty());
+        model.addAttribute("hasMovements", !recentMovements.isEmpty());
+        model.addAttribute("hasMovementChartData", movementsTotal > 0);
+        model.addAttribute("hasOrdersChartData", totalOrders > 0);
+        model.addAttribute("hasLowStock", lowStockCount > 0);
+        model.addAttribute("hasStaleOrders", !staleOrdersRaw.isEmpty());
         return "ui/dashboard";
     }
 
@@ -1794,6 +1918,33 @@ public class UiController {
         }
     }
 
+    private long safeLong(LongSupplier supplier, Model model) {
+        try {
+            return supplier.get();
+        } catch (DataAccessException ex) {
+            model.addAttribute("dataError", "Data is temporarily unavailable. Please try again in a moment.");
+            return 0L;
+        }
+    }
+
+    private double safeDouble(DoubleSupplier supplier, Model model) {
+        try {
+            return supplier.get();
+        } catch (DataAccessException ex) {
+            model.addAttribute("dataError", "Data is temporarily unavailable. Please try again in a moment.");
+            return 0.0;
+        }
+    }
+
+    private <K, V> Map<K, V> safeMap(MapSupplier<K, V> supplier, Model model) {
+        try {
+            return supplier.get();
+        } catch (DataAccessException ex) {
+            model.addAttribute("dataError", "Data is temporarily unavailable. Please try again in a moment.");
+            return Map.of();
+        }
+    }
+
     @FunctionalInterface
     private interface ListSupplier<T> {
         List<T> get();
@@ -1802,5 +1953,20 @@ public class UiController {
     @FunctionalInterface
     private interface CountSupplier {
         int get();
+    }
+
+    @FunctionalInterface
+    private interface LongSupplier {
+        long get();
+    }
+
+    @FunctionalInterface
+    private interface DoubleSupplier {
+        double get();
+    }
+
+    @FunctionalInterface
+    private interface MapSupplier<K, V> {
+        Map<K, V> get();
     }
 }

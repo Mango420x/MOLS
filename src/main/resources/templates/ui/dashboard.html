@@ -10,60 +10,294 @@
 
         <main class="col-12 col-lg-10 px-3 px-md-4 py-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h1 class="h3 mb-0">Dashboard</h1>
+                <div>
+                    <h1 class="h3 mb-0">Dashboard</h1>
+                    <div class="text-secondary">Operational overview and actionable alerts.</div>
+                </div>
             </div>
 
             <div th:replace="~{fragments/alerts :: alerts}"></div>
 
+            <!-- KPI Cards Row (6) -->
             <div class="row g-3">
-                <div class="col-12 col-md-6 col-xl-3">
-                    <div class="card shadow-sm border-0 h-100">
+                <div class="col-12 col-sm-6 col-md-2">
+                    <div class="card border-primary border-2 h-100">
                         <div class="card-body">
-                            <div class="text-secondary small text-uppercase">Warehouses</div>
-                            <div class="display-6 fw-semibold" th:text="${warehouseCount}">0</div>
-                            <a class="btn btn-sm btn-primary" th:href="@{/ui/warehouses}">View list</a>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="text-secondary small text-uppercase">Total Orders</div>
+                                <i class="bi bi-receipt text-primary"></i>
+                            </div>
+                            <div class="h3 mb-1 fw-semibold" th:text="${hasOrders ? totalOrders : '—'}">—</div>
+                            <div class="small">
+                                <span th:if="${pendingOrders > 0}">
+                                    <span class="badge text-bg-warning" th:text="${pendingOrders} + ' pending'">0 pending</span>
+                                </span>
+                                <span th:unless="${pendingOrders > 0}" class="text-secondary">No pending orders</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-12 col-md-6 col-xl-3">
-                    <div class="card shadow-sm border-0 h-100">
+                <div class="col-12 col-sm-6 col-md-2">
+                    <div class="card border-success border-2 h-100">
                         <div class="card-body">
-                            <div class="text-secondary small text-uppercase">Vehicles</div>
-                            <div class="display-6 fw-semibold" th:text="${vehicleCount}">0</div>
-                            <a class="btn btn-sm btn-primary" th:href="@{/ui/vehicles}">View list</a>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="text-secondary small text-uppercase">Stock Value</div>
+                                <i class="bi bi-boxes text-success"></i>
+                            </div>
+                            <div class="h3 mb-1 fw-semibold" th:text="${hasStock ? totalStockQuantity : '—'}">—</div>
+                            <div class="small text-secondary" th:text="${stockWarehouseCount > 0 ? 'Across ' + stockWarehouseCount + ' warehouses' : 'No stock yet'}">Across 0 warehouses</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-12 col-md-6 col-xl-3">
-                    <div class="card shadow-sm border-0 h-100">
+                <div class="col-12 col-sm-6 col-md-2">
+                    <div class="card border-info border-2 h-100">
                         <div class="card-body">
-                            <div class="text-secondary small text-uppercase">Orders</div>
-                            <div class="display-6 fw-semibold" th:text="${orderCount}">0</div>
-                            <a class="btn btn-sm btn-primary" th:href="@{/ui/orders}">View list</a>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="text-secondary small text-uppercase">Active Shipments</div>
+                                <i class="bi bi-truck-flatbed text-info"></i>
+                            </div>
+                            <div class="h3 mb-1 fw-semibold" th:text="${activeShipments}">0</div>
+                            <div class="small text-secondary">In transit</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-12 col-md-6 col-xl-3">
-                    <div class="card shadow-sm border-0 h-100">
+                <div class="col-12 col-sm-6 col-md-2">
+                    <div class="card border-danger border-2 h-100">
                         <div class="card-body">
-                            <div class="text-secondary small text-uppercase">Units</div>
-                            <div class="display-6 fw-semibold" th:text="${unitCount}">0</div>
-                            <a class="btn btn-sm btn-primary" th:href="@{/ui/units}">View list</a>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="text-secondary small text-uppercase">Low Stock Alerts</div>
+                                <i class="bi bi-exclamation-triangle text-danger"></i>
+                            </div>
+                            <div class="h3 mb-1 fw-semibold" th:text="${lowStockCount}">0</div>
+                            <div class="small">
+                                <span th:if="${lowStockCount > 0}" class="text-danger fw-semibold">
+                                    <i class="bi bi-lightning-charge-fill me-1"></i>Action needed
+                                </span>
+                                <span th:unless="${lowStockCount > 0}" class="text-secondary">
+                                    <i class="bi bi-check2-circle me-1"></i>All good
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-2">
+                    <div class="card border-warning border-2 h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="text-secondary small text-uppercase">Recent Activity</div>
+                                <i class="bi bi-clock-history text-warning"></i>
+                            </div>
+                            <div class="h3 mb-1 fw-semibold" th:text="${recentMovementsCount}">0</div>
+                            <div class="small text-secondary">Last 24 hours</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-2">
+                    <div class="card border-success border-2 h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="text-secondary small text-uppercase">Fulfillment Rate</div>
+                                <i class="bi bi-check2-square text-success"></i>
+                            </div>
+                            <div class="h3 mb-1 fw-semibold"
+                                 th:text="${hasOrders ? #numbers.formatDecimal(fulfillmentRatePercent, 1, 0) + '%' : '—'}">—</div>
+                            <div class="small">
+                                <span th:if="${hasOrders and fulfillmentTargetMet}" class="text-success fw-semibold">
+                                    <i class="bi bi-check2-circle me-1"></i>Target met
+                                </span>
+                                <span th:unless="${hasOrders and fulfillmentTargetMet}" class="text-secondary"
+                                      th:text="${'Target: ' + fulfillmentTargetPercent + '%'}">Target: 90%</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card mt-4 shadow-sm border-0">
-                <div class="card-body">
-                    <h2 class="h5">Front base ready to iterate</h2>
-                    <p class="mb-0 text-secondary">
-                        This base uses Thymeleaf + Bootstrap and is already wired to the existing backend.
-                        You can extend from here with forms, actions, and module-specific pages.
-                    </p>
+            <!-- Charts Section (3) -->
+            <div class="row g-3 mt-1">
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h2 class="h6 mb-0">Stock Distribution by Warehouse</h2>
+                                <a class="small text-decoration-none" th:href="@{/ui/stocks}">Manage stock</a>
+                            </div>
+                            <div th:if="${!hasStock}" class="alert alert-secondary mb-0">
+                                <i class="bi bi-info-circle me-1"></i>
+                                No stock data yet.
+                            </div>
+                            <div th:if="${hasStock}" style="height: 280px;">
+                                <canvas id="chartStockByWarehouse"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h2 class="h6 mb-0">Movements by Type (30 days)</h2>
+                                <a class="small text-decoration-none" th:href="@{/ui/movements}">View audit log</a>
+                            </div>
+                            <div th:if="${!hasMovementChartData}" class="alert alert-secondary mb-0">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Not enough movement history yet.
+                            </div>
+                            <div th:if="${hasMovementChartData}" style="height: 280px;">
+                                <canvas id="chartMovementsByType"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h2 class="h6 mb-0">Orders by Status</h2>
+                                <a class="small text-decoration-none" th:href="@{/ui/orders}">Manage orders</a>
+                            </div>
+                            <div th:if="${!hasOrdersChartData}" class="alert alert-secondary mb-0">
+                                <i class="bi bi-info-circle me-1"></i>
+                                No orders yet.
+                            </div>
+                            <div th:if="${hasOrdersChartData}" style="height: 280px;">
+                                <canvas id="chartOrdersByStatus"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card mt-3 border-0 shadow-sm">
+                <div class="card-body pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="h5 mb-0">Recent Activity</h2>
+                        <a class="small text-decoration-none" th:href="@{/ui/movements}">View all</a>
+                    </div>
+                    <div class="text-secondary">Last 15 stock movements.</div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Type</th>
+                            <th>Resource</th>
+                            <th class="text-end">Quantity</th>
+                            <th>Warehouse</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(recentMovements)}">
+                            <td colspan="5" class="text-center text-secondary py-4">
+                                No recent activity to display.
+                            </td>
+                        </tr>
+                        <tr th:each="m : ${recentMovements}">
+                            <td class="text-nowrap" th:text="${m.dateTime != null ? #temporals.format(m.dateTime, 'HH:mm') : '-'}">00:00</td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${m.type == 'ENTRY'} ? ' text-bg-success' : (${m.type == 'EXIT'} ? ' text-bg-danger' : ' text-bg-warning')"
+                                      th:text="${m.type != null ? m.type : 'UNKNOWN'}">ENTRY</span>
+                            </td>
+                            <td th:text="${m.stock != null && m.stock.resource != null ? m.stock.resource.name : '-'}">-</td>
+                            <td class="text-end" th:text="${m.quantity}">0</td>
+                            <td th:text="${m.stock != null && m.stock.warehouse != null ? m.stock.warehouse.name : '-'}">-</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Alerts Section -->
+            <div class="row g-3 mt-1">
+                <div class="col-12 col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h2 class="h5 mb-0">Low Stock Alerts</h2>
+                                <a class="small text-decoration-none" th:href="@{/ui/stocks}">Stock</a>
+                            </div>
+
+                            <div th:if="${!hasLowStock}" class="alert alert-success mb-0">
+                                <i class="bi bi-check2-circle me-1"></i>
+                                All stock levels healthy.
+                            </div>
+
+                            <div th:if="${hasLowStock}" class="list-group list-group-flush">
+                                <div class="list-group-item px-0" th:each="s : ${lowStockItems}">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div class="fw-semibold" th:text="${s.resource != null ? s.resource.name : '—'}">Resource</div>
+                                            <div class="small text-secondary">
+                                                <span th:text="${s.warehouse != null ? s.warehouse.name : '—'}">Warehouse</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge"
+                                                  th:classappend="${s.quantity < criticalStockThreshold} ? ' text-bg-danger' : ' text-bg-warning'"
+                                                  th:text="${s.quantity}">0</span>
+                                            <div class="small">
+                                                <a class="text-decoration-none" th:href="@{/ui/stocks/{id}/adjust(id=${s.id})}">
+                                                    Adjust
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2" th:if="${lowStockTotalCount > lowStockLimit}">
+                                    <a th:href="@{/ui/stocks}" class="text-decoration-none">
+                                        View all <span th:text="${lowStockTotalCount}">0</span> low stock items
+                                    </a>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h2 class="h5 mb-0">Pending Orders</h2>
+                                <a class="small text-decoration-none" th:href="@{/ui/orders}">Orders</a>
+                            </div>
+                            <div class="text-secondary mb-2" th:text="${'Pending for more than ' + staleOrdersDays + ' days'}">Pending for more than 3 days</div>
+
+                            <div th:if="${!hasStaleOrders}" class="alert alert-success mb-0">
+                                <i class="bi bi-check2-circle me-1"></i>
+                                No stale orders.
+                            </div>
+
+                            <div th:if="${hasStaleOrders}" class="list-group list-group-flush">
+                                <div class="list-group-item px-0" th:each="o : ${staleOrders}">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <a class="fw-semibold text-decoration-none"
+                                               th:href="@{/ui/orders/{id}(id=${o.orderId})}"
+                                               th:text="${'Order #' + o.orderId}">Order #1</a>
+                                            <div class="small text-secondary" th:text="${o.unitName}">Unit</div>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge"
+                                                  th:classappend="${o.daysPending > 7} ? ' text-bg-danger' : (${o.daysPending >= 3} ? ' text-bg-warning' : ' text-bg-secondary')"
+                                                  th:text="${o.daysPending + ' days'}">3 days</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -71,5 +305,171 @@
 </div>
 
 <th:block th:replace="~{fragments/scripts :: scripts}"></th:block>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script th:inline="javascript">
+    const chartData = /*[[${chartData}]]*/ {};
+
+    const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+    const bodyColor = cssVar('--bs-body-color') || '#212529';
+    const borderColor = cssVar('--bs-border-color') || 'rgba(0,0,0,.125)';
+
+    Chart.defaults.color = bodyColor;
+    Chart.defaults.borderColor = borderColor;
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.plugins.legend.labels.boxWidth = 10;
+
+    const filterZeros = (labels, values) => {
+        const filtered = { labels: [], values: [] };
+        for (let i = 0; i < labels.length; i++) {
+            const v = Number(values[i] ?? 0);
+            if (v > 0) {
+                filtered.labels.push(labels[i]);
+                filtered.values.push(v);
+            }
+        }
+        return filtered;
+    };
+
+    const doughnutCenterText = {
+        id: 'doughnutCenterText',
+        afterDraw(chart, args, options) {
+            if (!options || typeof options.text !== 'string') return;
+            const { ctx, chartArea: { left, right, top, bottom } } = chart;
+            const x = (left + right) / 2;
+            const y = (top + bottom) / 2;
+            ctx.save();
+            ctx.fillStyle = bodyColor;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = '600 18px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+            ctx.fillText(options.text, x, y);
+            ctx.restore();
+        }
+    };
+
+    // Chart 1: Stock Distribution by Warehouse (Horizontal Bar)
+    if (document.getElementById('chartStockByWarehouse')) {
+        const labels = chartData.stockByWarehouse?.labels || [];
+        const values = chartData.stockByWarehouse?.values || [];
+        const primaryRgb = cssVar('--bs-primary-rgb') || '13,110,253';
+        const bg = labels.map((_, i) => {
+            const denom = Math.max(1, labels.length - 1);
+            const alpha = 0.35 + (0.55 * (i / denom));
+            return `rgba(${primaryRgb}, ${alpha.toFixed(3)})`;
+        });
+
+        new Chart(document.getElementById('chartStockByWarehouse'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Total quantity',
+                    data: values,
+                    backgroundColor: bg,
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: true }
+                },
+                scales: {
+                    x: {
+                        grid: { color: borderColor },
+                        ticks: { color: bodyColor }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: bodyColor }
+                    }
+                }
+            }
+        });
+    }
+
+    // Chart 2: Movements by Type (Doughnut)
+    if (document.getElementById('chartMovementsByType')) {
+        const labels = chartData.movementsByType?.labels || [];
+        const values = chartData.movementsByType?.values || [];
+        const total = Number(chartData.movementsByType?.total || 0);
+        const filtered = filterZeros(labels, values);
+
+        const successRgb = cssVar('--bs-success-rgb') || '25,135,84';
+        const dangerRgb = cssVar('--bs-danger-rgb') || '220,53,69';
+        const warningRgb = cssVar('--bs-warning-rgb') || '255,193,7';
+        const colorMap = {
+            'ENTRY': `rgba(${successRgb}, 0.85)`,
+            'EXIT': `rgba(${dangerRgb}, 0.85)`,
+            'ADJUSTMENT': `rgba(${warningRgb}, 0.85)`
+        };
+        const bg = filtered.labels.map(l => colorMap[l] || `rgba(${warningRgb}, 0.85)`);
+
+        new Chart(document.getElementById('chartMovementsByType'), {
+            type: 'doughnut',
+            data: {
+                labels: filtered.labels,
+                datasets: [{
+                    data: filtered.values,
+                    backgroundColor: bg,
+                    borderWidth: 0
+                }]
+            },
+            plugins: [doughnutCenterText],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { position: 'bottom' },
+                    doughnutCenterText: { text: String(total) }
+                }
+            }
+        });
+    }
+
+    // Chart 3: Orders by Status (Pie)
+    if (document.getElementById('chartOrdersByStatus')) {
+        const labels = chartData.ordersByStatus?.labels || [];
+        const values = chartData.ordersByStatus?.values || [];
+        const filtered = filterZeros(labels, values);
+
+        const successRgb = cssVar('--bs-success-rgb') || '25,135,84';
+        const dangerRgb = cssVar('--bs-danger-rgb') || '220,53,69';
+        const warningRgb = cssVar('--bs-warning-rgb') || '255,193,7';
+
+        const colorMap = {
+            'PENDING': `rgba(${warningRgb}, 0.85)`,
+            'COMPLETED': `rgba(${successRgb}, 0.85)`,
+            'CANCELLED': `rgba(${dangerRgb}, 0.85)`
+        };
+        const bg = filtered.labels.map(l => colorMap[l] || `rgba(${warningRgb}, 0.85)`);
+
+        new Chart(document.getElementById('chartOrdersByStatus'), {
+            type: 'pie',
+            data: {
+                labels: filtered.labels,
+                datasets: [{
+                    data: filtered.values,
+                    backgroundColor: bg,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+</script>
 </body>
 </html>

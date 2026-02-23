@@ -16,6 +16,9 @@ Portfolio project: a web-based logistics system to manage resources, stock, orde
 - Orders + items workflow (create, edit, inline item management)
 - Shipments lifecycle including fulfillment on delivery
 - Detail pages that link Orders/Shipments to related Movements (traceability)
+- Operational dashboard (`/ui`) with KPIs, charts (Chart.js), recent activity, and proactive alerts
+- First-run setup to create the initial admin user (no manual DB seeding)
+- Admin-only user management in the UI (roles, password reset, enable/disable)
 
 ---
 
@@ -44,8 +47,30 @@ Para detalles técnicos y arquitectura, consulta [PROJECT_OVERVIEW.md](PROJECT_O
 
 With the application running:
 
-- UI: http://localhost:8080/ui
+- UI dashboard: http://localhost:8080/ui
+- First-run setup: http://localhost:8080/ui/setup
 - Swagger UI: http://localhost:8080/swagger-ui.html
+
+---
+
+## Dashboard (UI)
+
+The dashboard at `/ui` is designed to work with an empty database (friendly empty states) and improve naturally as historical data grows.
+
+Includes:
+
+- KPI cards: total orders (with pending), stock quantity across warehouses, active shipments, low-stock alerts, recent movements (24h), fulfillment rate
+- Charts: stock distribution by warehouse (bar), movements by type (doughnut), orders by status (pie)
+- Alerts: low stock items (action link to adjust), stale pending orders (link to order detail)
+
+Configuration (no hardcoded thresholds): `src/main/resources/application.properties`
+
+- `mols.dashboard.low-stock-threshold` (default: 10)
+- `mols.dashboard.critical-stock-threshold` (default: 5)
+- `mols.dashboard.stale-order-days` (default: 3)
+- `mols.dashboard.recent-activity-hours` (default: 24)
+- `mols.dashboard.movement-chart-days` (default: 30)
+- `mols.dashboard.fulfillment-target-percent` (default: 90)
 
 ---
 
