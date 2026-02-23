@@ -8,6 +8,16 @@ body {
   explicitly override those tokens to ensure buttons/borders adopt the palette.
 */
 :root {
+    color-scheme: light;
+
+    /* Base contrast (light mode): push text closer to black. */
+    --bs-body-color: #111111;
+    --bs-body-color-rgb: 17, 17, 17;
+    --bs-secondary-color: rgba(17, 17, 17, 0.72);
+    --bs-secondary-color-rgb: 17, 17, 17;
+    --bs-tertiary-color: rgba(17, 17, 17, 0.55);
+    --bs-tertiary-color-rgb: 17, 17, 17;
+
     --mols-accent: #1b4332;
     --mols-accent-hover: #143628;
     --mols-accent-active: #0f2b1f;
@@ -44,6 +54,16 @@ body {
 }
 
 [data-bs-theme="dark"] {
+    color-scheme: dark;
+
+    /* Base contrast (dark mode): push text closer to white. */
+    --bs-body-color: #f8f9fa;
+    --bs-body-color-rgb: 248, 249, 250;
+    --bs-secondary-color: rgba(248, 249, 250, 0.84);
+    --bs-secondary-color-rgb: 248, 249, 250;
+    --bs-tertiary-color: rgba(248, 249, 250, 0.65);
+    --bs-tertiary-color-rgb: 248, 249, 250;
+
     --mols-accent: #2d6a4f;
     --mols-accent-hover: #40916c;
     --mols-accent-active: #52b788;
