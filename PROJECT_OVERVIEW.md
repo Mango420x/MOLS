@@ -416,7 +416,7 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 - **ORM**: Hibernate (JPA)
 - **Build Tool**: Maven 3.x (wrapper included)
 - **Containerization**: Docker + Docker Compose
-The project is editor-agnostic; VS Code works fine.
+- **IDE**: The project is editor-agnostic, VS Code works fine.
 
 ## Contacts and Next Steps
 
