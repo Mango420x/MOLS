@@ -1,5 +1,5 @@
 body {
-    font-size: 0.95rem;
+    font-size: var(--bs-body-font-size);
 }
 
 /*
@@ -13,6 +13,11 @@ body {
     --mols-accent-active: #0f2b1f;
     --mols-accent-rgb: 27, 67, 50;
 
+    --mols-accent-surface: rgba(var(--mols-accent-rgb), 0.08);
+    --mols-accent-border: rgba(var(--mols-accent-rgb), 0.55);
+
+    --bs-body-font-size: 0.95rem;
+
     /* Secondary accents (brand-related but distinct) */
     --mols-swagger: #2d6a4f;
     --mols-swagger-hover: #1f5a41;
@@ -21,8 +26,21 @@ body {
 
     --bs-primary: var(--mols-accent);
     --bs-primary-rgb: var(--mols-accent-rgb);
+
+    /* Ensure Bootstrap “primary” utilities match the accent palette (e.g. text-primary). */
+    --bs-primary-text-emphasis: var(--mols-accent);
+    --bs-primary-bg-subtle: rgba(var(--mols-accent-rgb), 0.12);
+    --bs-primary-border-subtle: rgba(var(--mols-accent-rgb), 0.32);
+
     --bs-link-color: var(--mols-accent);
     --bs-link-hover-color: var(--mols-accent-hover);
+    --bs-link-color-rgb: var(--mols-accent-rgb);
+    --bs-link-hover-color-rgb: 20, 54, 40;
+
+    --bs-focus-ring-color: rgba(var(--mols-accent-rgb), 0.25);
+
+    /* Tables */
+    --bs-table-hover-bg: rgba(var(--mols-accent-rgb), 0.045);
 }
 
 [data-bs-theme="dark"] {
@@ -31,6 +49,9 @@ body {
     --mols-accent-active: #52b788;
     --mols-accent-rgb: 45, 106, 79;
 
+    --mols-accent-surface: rgba(var(--mols-accent-rgb), 0.14);
+    --mols-accent-border: rgba(var(--mols-accent-rgb), 0.80);
+
     --mols-swagger: #52b788;
     --mols-swagger-hover: #74c69d;
     --mols-openapi: #b0892f;
@@ -38,8 +59,20 @@ body {
 
     --bs-primary: var(--mols-accent);
     --bs-primary-rgb: var(--mols-accent-rgb);
+
+    --bs-primary-text-emphasis: var(--mols-accent-active);
+    --bs-primary-bg-subtle: rgba(var(--mols-accent-rgb), 0.18);
+    --bs-primary-border-subtle: rgba(var(--mols-accent-rgb), 0.42);
+
     --bs-link-color: var(--mols-accent-active);
     --bs-link-hover-color: var(--mols-accent-hover);
+    --bs-link-color-rgb: 82, 183, 136;
+    --bs-link-hover-color-rgb: 64, 145, 108;
+
+    --bs-focus-ring-color: rgba(var(--mols-accent-rgb), 0.35);
+
+    /* Tables */
+    --bs-table-hover-bg: rgba(var(--mols-accent-rgb), 0.075);
 }
 
 /* Primary buttons */
@@ -116,7 +149,7 @@ body {
 
 /* Accent borders (tables/cards, etc.) */
 .border-primary {
-    border-color: var(--mols-accent) !important;
+    border-color: var(--mols-accent-border) !important;
 }
 
 .min-vh-main {
@@ -136,11 +169,11 @@ body {
 
 .nav-pills .nav-link:hover {
     color: var(--bs-body-color);
-    background-color: rgba(var(--mols-accent-rgb), 0.12);
+    background-color: var(--mols-accent-surface);
 }
 
 .nav-pills .nav-link:focus-visible {
-    box-shadow: 0 0 0 .2rem rgba(var(--mols-accent-rgb), 0.35);
+    box-shadow: 0 0 0 .2rem var(--bs-focus-ring-color);
 }
 
 .card {

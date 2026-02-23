@@ -27,7 +27,9 @@
                                 <div class="text-secondary small text-uppercase">Total Orders</div>
                                 <i class="bi bi-receipt text-primary"></i>
                             </div>
-                            <div class="h3 mb-1 fw-semibold" th:text="${hasOrders ? totalOrders : '—'}">—</div>
+                            <div class="h3 mb-1 fw-semibold"
+                                 th:classappend="${hasOrders ? ' text-primary' : ' text-secondary'}"
+                                 th:text="${hasOrders ? totalOrders : '—'}">—</div>
                             <div class="small">
                                 <span th:if="${pendingOrders > 0}">
                                     <span class="badge text-bg-warning" th:text="${pendingOrders} + ' pending'">0 pending</span>
@@ -45,7 +47,9 @@
                                 <div class="text-secondary small text-uppercase">Stock Value</div>
                                 <i class="bi bi-boxes text-success"></i>
                             </div>
-                            <div class="h3 mb-1 fw-semibold" th:text="${hasStock ? totalStockQuantity : '—'}">—</div>
+                            <div class="h3 mb-1 fw-semibold"
+                                 th:classappend="${hasStock ? ' text-success' : ' text-secondary'}"
+                                 th:text="${hasStock ? totalStockQuantity : '—'}">—</div>
                             <div class="small text-secondary" th:text="${stockWarehouseCount > 0 ? 'Across ' + stockWarehouseCount + ' warehouses' : 'No stock yet'}">Across 0 warehouses</div>
                         </div>
                     </div>
@@ -58,7 +62,7 @@
                                 <div class="text-secondary small text-uppercase">Active Shipments</div>
                                 <i class="bi bi-truck-flatbed text-info"></i>
                             </div>
-                            <div class="h3 mb-1 fw-semibold" th:text="${activeShipments}">0</div>
+                            <div class="h3 mb-1 fw-semibold text-info" th:text="${activeShipments}">0</div>
                             <div class="small text-secondary">In transit</div>
                         </div>
                     </div>
@@ -71,7 +75,9 @@
                                 <div class="text-secondary small text-uppercase">Low Stock Alerts</div>
                                 <i class="bi bi-exclamation-triangle text-danger"></i>
                             </div>
-                            <div class="h3 mb-1 fw-semibold" th:text="${lowStockCount}">0</div>
+                            <div class="h3 mb-1 fw-semibold"
+                                 th:classappend="${lowStockCount > 0 ? ' text-danger' : ' text-secondary'}"
+                                 th:text="${lowStockCount}">0</div>
                             <div class="small">
                                 <span th:if="${lowStockCount > 0}" class="text-danger fw-semibold">
                                     <i class="bi bi-lightning-charge-fill me-1"></i>Action needed
@@ -91,7 +97,9 @@
                                 <div class="text-secondary small text-uppercase">Recent Activity</div>
                                 <i class="bi bi-clock-history text-warning"></i>
                             </div>
-                            <div class="h3 mb-1 fw-semibold" th:text="${recentMovementsCount}">0</div>
+                            <div class="h3 mb-1 fw-semibold"
+                                 th:classappend="${recentMovementsCount > 0 ? ' text-warning' : ' text-secondary'}"
+                                 th:text="${recentMovementsCount}">0</div>
                             <div class="small text-secondary">Last 24 hours</div>
                         </div>
                     </div>
@@ -105,6 +113,7 @@
                                 <i class="bi bi-check2-square text-success"></i>
                             </div>
                             <div class="h3 mb-1 fw-semibold"
+                                 th:classappend="${hasOrders ? ' text-success' : ' text-secondary'}"
                                  th:text="${hasOrders ? #numbers.formatDecimal(fulfillmentRatePercent, 1, 0) + '%' : '—'}">—</div>
                             <div class="small">
                                 <span th:if="${hasOrders and fulfillmentTargetMet}" class="text-success fw-semibold">
@@ -308,168 +317,231 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script th:inline="javascript">
-    const chartData = /*[[${chartData}]]*/ {};
+    (() => {
+        const chartData = /*[[${chartData}]]*/ {};
 
-    const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
-    const bodyColor = cssVar('--bs-body-color') || '#212529';
-    const borderColor = cssVar('--bs-border-color') || 'rgba(0,0,0,.125)';
+        const getThemeTokens = () => {
+            const bodyColor = cssVar('--bs-body-color') || '#212529';
+            const borderColor = cssVar('--bs-border-color') || 'rgba(0,0,0,.125)';
+            return {
+                bodyColor,
+                borderColor,
+                primaryRgb: cssVar('--bs-primary-rgb') || '13,110,253',
+                successRgb: cssVar('--bs-success-rgb') || '25,135,84',
+                dangerRgb: cssVar('--bs-danger-rgb') || '220,53,69',
+                warningRgb: cssVar('--bs-warning-rgb') || '255,193,7'
+            };
+        };
 
-    Chart.defaults.color = bodyColor;
-    Chart.defaults.borderColor = borderColor;
-    Chart.defaults.plugins.legend.labels.usePointStyle = true;
-    Chart.defaults.plugins.legend.labels.boxWidth = 10;
+        const applyChartDefaults = () => {
+            const t = getThemeTokens();
+            Chart.defaults.color = t.bodyColor;
+            Chart.defaults.borderColor = t.borderColor;
+            Chart.defaults.plugins.legend.labels.usePointStyle = true;
+            Chart.defaults.plugins.legend.labels.boxWidth = 10;
+            return t;
+        };
 
-    const filterZeros = (labels, values) => {
-        const filtered = { labels: [], values: [] };
-        for (let i = 0; i < labels.length; i++) {
-            const v = Number(values[i] ?? 0);
-            if (v > 0) {
-                filtered.labels.push(labels[i]);
-                filtered.values.push(v);
+        const filterZeros = (labels, values) => {
+            const filtered = { labels: [], values: [] };
+            for (let i = 0; i < labels.length; i++) {
+                const v = Number(values[i] ?? 0);
+                if (v > 0) {
+                    filtered.labels.push(labels[i]);
+                    filtered.values.push(v);
+                }
             }
-        }
-        return filtered;
-    };
+            return filtered;
+        };
 
-    const doughnutCenterText = {
-        id: 'doughnutCenterText',
-        afterDraw(chart, args, options) {
-            if (!options || typeof options.text !== 'string') return;
-            const { ctx, chartArea: { left, right, top, bottom } } = chart;
-            const x = (left + right) / 2;
-            const y = (top + bottom) / 2;
-            ctx.save();
-            ctx.fillStyle = bodyColor;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.font = '600 18px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
-            ctx.fillText(options.text, x, y);
-            ctx.restore();
-        }
-    };
+        const doughnutCenterText = {
+            id: 'doughnutCenterText',
+            afterDraw(chart, args, options) {
+                if (!options || typeof options.text !== 'string') return;
+                const { ctx, chartArea: { left, right, top, bottom } } = chart;
+                const x = (left + right) / 2;
+                const y = (top + bottom) / 2;
+                ctx.save();
+                ctx.fillStyle = cssVar('--bs-body-color') || '#212529';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = '600 18px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+                ctx.fillText(options.text, x, y);
+                ctx.restore();
+            }
+        };
 
-    // Chart 1: Stock Distribution by Warehouse (Horizontal Bar)
-    if (document.getElementById('chartStockByWarehouse')) {
-        const labels = chartData.stockByWarehouse?.labels || [];
-        const values = chartData.stockByWarehouse?.values || [];
-        const primaryRgb = cssVar('--bs-primary-rgb') || '13,110,253';
-        const bg = labels.map((_, i) => {
+        const charts = {
+            stockByWarehouse: null,
+            movementsByType: null,
+            ordersByStatus: null,
+            movementsTotal: 0
+        };
+
+        const updateChartsTheme = () => {
+            const t = applyChartDefaults();
+
+            if (charts.stockByWarehouse) {
+                const labels = charts.stockByWarehouse.data.labels || [];
+                const denom = Math.max(1, labels.length - 1);
+                charts.stockByWarehouse.data.datasets[0].backgroundColor = labels.map((_, i) => {
+                    const alpha = 0.35 + (0.55 * (i / denom));
+                    return `rgba(${t.primaryRgb}, ${alpha.toFixed(3)})`;
+                });
+                charts.stockByWarehouse.options.scales.x.grid.color = t.borderColor;
+                charts.stockByWarehouse.options.scales.x.ticks.color = t.bodyColor;
+                charts.stockByWarehouse.options.scales.y.ticks.color = t.bodyColor;
+                charts.stockByWarehouse.update();
+            }
+
+            if (charts.movementsByType) {
+                const labels = charts.movementsByType.data.labels || [];
+                const colorMap = {
+                    'ENTRY': `rgba(${t.successRgb}, 0.85)`,
+                    'EXIT': `rgba(${t.dangerRgb}, 0.85)`,
+                    'ADJUSTMENT': `rgba(${t.warningRgb}, 0.85)`
+                };
+                charts.movementsByType.data.datasets[0].backgroundColor = labels.map(l => colorMap[l] || `rgba(${t.warningRgb}, 0.85)`);
+                charts.movementsByType.options.plugins.doughnutCenterText.text = String(charts.movementsTotal);
+                charts.movementsByType.update();
+            }
+
+            if (charts.ordersByStatus) {
+                const labels = charts.ordersByStatus.data.labels || [];
+                const colorMap = {
+                    'PENDING': `rgba(${t.warningRgb}, 0.85)`,
+                    'COMPLETED': `rgba(${t.successRgb}, 0.85)`,
+                    'CANCELLED': `rgba(${t.dangerRgb}, 0.85)`
+                };
+                charts.ordersByStatus.data.datasets[0].backgroundColor = labels.map(l => colorMap[l] || `rgba(${t.warningRgb}, 0.85)`);
+                charts.ordersByStatus.update();
+            }
+        };
+
+        // Chart 1: Stock Distribution by Warehouse (Horizontal Bar)
+        if (document.getElementById('chartStockByWarehouse')) {
+            const labels = chartData.stockByWarehouse?.labels || [];
+            const values = chartData.stockByWarehouse?.values || [];
+            const t = applyChartDefaults();
             const denom = Math.max(1, labels.length - 1);
-            const alpha = 0.35 + (0.55 * (i / denom));
-            return `rgba(${primaryRgb}, ${alpha.toFixed(3)})`;
-        });
+            const bg = labels.map((_, i) => {
+                const alpha = 0.35 + (0.55 * (i / denom));
+                return `rgba(${t.primaryRgb}, ${alpha.toFixed(3)})`;
+            });
 
-        new Chart(document.getElementById('chartStockByWarehouse'), {
-            type: 'bar',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'Total quantity',
-                    data: values,
-                    backgroundColor: bg,
-                    borderRadius: 6,
-                    borderSkipped: false
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: true }
+            charts.stockByWarehouse = new Chart(document.getElementById('chartStockByWarehouse'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Total quantity',
+                        data: values,
+                        backgroundColor: bg,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
                 },
-                scales: {
-                    x: {
-                        grid: { color: borderColor },
-                        ticks: { color: bodyColor }
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true }
                     },
-                    y: {
-                        grid: { display: false },
-                        ticks: { color: bodyColor }
+                    scales: {
+                        x: {
+                            grid: { color: t.borderColor },
+                            ticks: { color: t.bodyColor }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: t.bodyColor }
+                        }
                     }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    // Chart 2: Movements by Type (Doughnut)
-    if (document.getElementById('chartMovementsByType')) {
-        const labels = chartData.movementsByType?.labels || [];
-        const values = chartData.movementsByType?.values || [];
-        const total = Number(chartData.movementsByType?.total || 0);
-        const filtered = filterZeros(labels, values);
+        // Chart 2: Movements by Type (Doughnut)
+        if (document.getElementById('chartMovementsByType')) {
+            const labels = chartData.movementsByType?.labels || [];
+            const values = chartData.movementsByType?.values || [];
+            charts.movementsTotal = Number(chartData.movementsByType?.total || 0);
+            const filtered = filterZeros(labels, values);
 
-        const successRgb = cssVar('--bs-success-rgb') || '25,135,84';
-        const dangerRgb = cssVar('--bs-danger-rgb') || '220,53,69';
-        const warningRgb = cssVar('--bs-warning-rgb') || '255,193,7';
-        const colorMap = {
-            'ENTRY': `rgba(${successRgb}, 0.85)`,
-            'EXIT': `rgba(${dangerRgb}, 0.85)`,
-            'ADJUSTMENT': `rgba(${warningRgb}, 0.85)`
-        };
-        const bg = filtered.labels.map(l => colorMap[l] || `rgba(${warningRgb}, 0.85)`);
+            const t = getThemeTokens();
+            const colorMap = {
+                'ENTRY': `rgba(${t.successRgb}, 0.85)`,
+                'EXIT': `rgba(${t.dangerRgb}, 0.85)`,
+                'ADJUSTMENT': `rgba(${t.warningRgb}, 0.85)`
+            };
+            const bg = filtered.labels.map(l => colorMap[l] || `rgba(${t.warningRgb}, 0.85)`);
 
-        new Chart(document.getElementById('chartMovementsByType'), {
-            type: 'doughnut',
-            data: {
-                labels: filtered.labels,
-                datasets: [{
-                    data: filtered.values,
-                    backgroundColor: bg,
-                    borderWidth: 0
-                }]
-            },
-            plugins: [doughnutCenterText],
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '70%',
-                plugins: {
-                    legend: { position: 'bottom' },
-                    doughnutCenterText: { text: String(total) }
+            charts.movementsByType = new Chart(document.getElementById('chartMovementsByType'), {
+                type: 'doughnut',
+                data: {
+                    labels: filtered.labels,
+                    datasets: [{
+                        data: filtered.values,
+                        backgroundColor: bg,
+                        borderWidth: 0
+                    }]
+                },
+                plugins: [doughnutCenterText],
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        doughnutCenterText: { text: String(charts.movementsTotal) }
+                    }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    // Chart 3: Orders by Status (Pie)
-    if (document.getElementById('chartOrdersByStatus')) {
-        const labels = chartData.ordersByStatus?.labels || [];
-        const values = chartData.ordersByStatus?.values || [];
-        const filtered = filterZeros(labels, values);
+        // Chart 3: Orders by Status (Pie)
+        if (document.getElementById('chartOrdersByStatus')) {
+            const labels = chartData.ordersByStatus?.labels || [];
+            const values = chartData.ordersByStatus?.values || [];
+            const filtered = filterZeros(labels, values);
 
-        const successRgb = cssVar('--bs-success-rgb') || '25,135,84';
-        const dangerRgb = cssVar('--bs-danger-rgb') || '220,53,69';
-        const warningRgb = cssVar('--bs-warning-rgb') || '255,193,7';
+            const t = getThemeTokens();
+            const colorMap = {
+                'PENDING': `rgba(${t.warningRgb}, 0.85)`,
+                'COMPLETED': `rgba(${t.successRgb}, 0.85)`,
+                'CANCELLED': `rgba(${t.dangerRgb}, 0.85)`
+            };
+            const bg = filtered.labels.map(l => colorMap[l] || `rgba(${t.warningRgb}, 0.85)`);
 
-        const colorMap = {
-            'PENDING': `rgba(${warningRgb}, 0.85)`,
-            'COMPLETED': `rgba(${successRgb}, 0.85)`,
-            'CANCELLED': `rgba(${dangerRgb}, 0.85)`
-        };
-        const bg = filtered.labels.map(l => colorMap[l] || `rgba(${warningRgb}, 0.85)`);
-
-        new Chart(document.getElementById('chartOrdersByStatus'), {
-            type: 'pie',
-            data: {
-                labels: filtered.labels,
-                datasets: [{
-                    data: filtered.values,
-                    backgroundColor: bg,
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' }
+            charts.ordersByStatus = new Chart(document.getElementById('chartOrdersByStatus'), {
+                type: 'pie',
+                data: {
+                    labels: filtered.labels,
+                    datasets: [{
+                        data: filtered.values,
+                        backgroundColor: bg,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
                 }
-            }
+            });
+        }
+
+        // Update charts when switching theme (no reload needed)
+        document.addEventListener('mols:theme-changed', () => {
+            window.requestAnimationFrame(updateChartsTheme);
         });
-    }
+    })();
 </script>
 </body>
 </html>

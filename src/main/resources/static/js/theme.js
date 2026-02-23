@@ -30,9 +30,14 @@
     icon.classList.add(theme === 'dark' ? 'bi-sun' : 'bi-moon-stars');
   };
 
+  const notifyThemeChanged = (theme) => {
+    document.dispatchEvent(new CustomEvent('mols:theme-changed', { detail: { theme } }));
+  };
+
   const applyTheme = (theme) => {
     setTheme(theme);
     updateToggleUi(theme);
+    notifyThemeChanged(theme);
   };
 
   // Keep theme aligned if user changes OS theme and they didn't force a choice.
