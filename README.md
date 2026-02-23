@@ -4,7 +4,7 @@
   <img src="https://github.com/user-attachments/assets/6c3cae38-df16-4c85-a334-6a53cb1f27fa" width="300" alt="MOLS logo">
 </p>
 
-![CI](https://github.com/Mango420x/MOLS/actions/workflows/ci.yml/badge.svg)
+[![BUILD](https://img.shields.io/github/actions/workflow/status/Mango420x/MOLS/ci.yml?branch=main&label=build&style=for-the-badge)](https://github.com/Mango420x/MOLS/actions/workflows/ci.yml)
 
 MOLS is a logistics app to manage warehouses, resources, stock, orders and shipments, with an audit log (movements) so you can trace what changed and why.
 
