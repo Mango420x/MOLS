@@ -28,6 +28,8 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class OrderService {
 
+    private static final String STATUS_COMPLETED = "COMPLETED";
+
     private final OrderRepository orderRepository;
     private final OrderItemService orderItemService;
 
@@ -49,6 +51,13 @@ public class OrderService {
 
     public List<Order> getAllOrders(Sort sort) {
         return orderRepository.findAll(sort);
+    }
+
+    public List<Order> getOrdersExcludingStatus(String excludedStatus, Sort sort) {
+        if (excludedStatus == null || excludedStatus.isBlank()) {
+            return orderRepository.findAll(sort);
+        }
+        return orderRepository.findByStatusNot(excludedStatus, sort);
     }
 
     /**
@@ -176,8 +185,31 @@ public class OrderService {
             return 0.0;
         }
 
-        long completed = orderRepository.countByStatus("COMPLETED");
+        long completed = orderRepository.countByStatus(STATUS_COMPLETED);
         return (completed * 100.0) / total;
+    }
+
+    /**
+     * Marks an order as completed.
+     *
+     * Used by shipment fulfillment: when a shipment is delivered, the parent order should be considered fulfilled.
+     */
+    @Transactional
+    public void markOrderCompleted(Long orderId) {
+        if (orderId == null) {
+            return;
+        }
+
+        Order order = orderRepository
+                .findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+
+        if (STATUS_COMPLETED.equalsIgnoreCase(order.getStatus() != null ? order.getStatus().trim() : null)) {
+            return;
+        }
+
+        order.setStatus(STATUS_COMPLETED);
+        orderRepository.save(order);
     }
 
     /**

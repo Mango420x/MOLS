@@ -1,34 +1,29 @@
 # MOLS — Project Overview
 
 ## Purpose
-- MOLS (Multimodal Operative Logistics System) is a backend-first logistics management system designed with an industrial/defense-grade engineering mindset.
-- Provides REST API services for managing logistics operations: units, warehouses, resources, stock, orders, shipments, vehicles, and movement auditing.
-- Includes a lightweight admin UI (Thymeleaf) for non-technical users while keeping the REST API + JWT security intact.
-- Portfolio-grade project demonstrating clean architecture, strict layering, auditability, and deterministic behavior.
+
+MOLS is a Spring Boot logistics app with:
+
+- a REST API (JWT-secured) for CRUD operations
+- a server-rendered admin UI (`/ui`) for day-to-day usage
+- stock + movement auditing so changes are traceable
+
+The goal of this doc is to help a developer understand where things live, how the flow works, and which business rules are enforced in the services.
 
 ## Project Status
-- **Runtime**: Spring Boot 4.0.2 (Spring MVC) running on Java 21, connected to PostgreSQL.
-- **Codebase**: Java sources under `src/main/java/com/mls/logistics`.
-- **Entry Point**: `com.mls.logistics.LogisticsApplication`.
-- **Architecture**: Classic four-layer architecture (Controllers → Services → Repositories → Database) with DTOs and a global exception handler.
-- **Database**: PostgreSQL (`logistics_db` database, `logistics_user` credentials configured).
-- **API Status**: CRUD REST API implemented and operational at `http://localhost:8080/api/*` (GET/POST/PUT/DELETE with DTOs + validation).
-- **API Docs**: OpenAPI + Swagger UI configured (`OpenApiConfig`) and available at `/swagger-ui.html` and `/v3/api-docs`.
-- **Build**: Maven wrapper present (`mvnw`, `mvnw.cmd`); build artifacts in `target/`.
-- **CI**: GitHub Actions workflow configured at `.github/workflows/ci.yml` (build + tests on push/PR to `main`).
-- **Security**: JWT-based authentication and role-based authorization enabled (`/api/auth/login`; `/api/auth/register` is ADMIN-only).
-- **UI Security**: Form login + session authentication enabled for `/ui/**` (`/ui/login`, `/ui/logout`), with a first-run setup page (`/ui/setup`) and an ADMIN-only users module (`/ui/users/**`).
-- **UI**: Thymeleaf + Bootstrap 5.3 admin interface under `/ui/**` (dark mode supported).
-- **Testing**: Controller and service test suites implemented and passing locally via Maven (`./mvnw.cmd test`).
-- **Containerization**: Docker multi-stage build + Docker Compose orchestration available for app + database.
-- **Business Rules**: Core stock/order constraints already enforced in services (non-negative stock, automatic movement audit, order item stock ceiling).
 
-## What This Repository Contains
+- Runtime: Spring Boot 4.0.2 on Java 21
+- Database: PostgreSQL (local or via Docker Compose)
+- API: `/api/**` (Swagger at `/swagger-ui.html`)
+- UI: `/ui/**` (Thymeleaf + Bootstrap, dark mode)
+- Build/tests: Maven wrapper (`./mvnw.cmd test`)
+- CI: GitHub Actions workflow in `.github/workflows/ci.yml`
 
-### Backend: Four-Layer Architecture
+## Repo Layout (High Level)
 
-#### 1. **REST Controller Layer** (`controller/`)
-REST API endpoints exposing HTTP interfaces for all domain entities:
+### REST API
+
+Controllers live in `src/main/java/com/mls/logistics/controller` and expose endpoints like:
 - `WarehouseController` — `/api/warehouses`
 - `UnitController` — `/api/units`
 - `ResourceController` — `/api/resources`
@@ -39,26 +34,9 @@ REST API endpoints exposing HTTP interfaces for all domain entities:
 - `ShipmentController` — `/api/shipments`
 - `MovementController` — `/api/movements`
 
-**Controller Responsibilities**:
-- HTTP request/response handling only
-- No business logic (delegated to services)
-- No direct repository access
-- Constructor-based dependency injection
-- Proper HTTP status codes (200 OK, 201 Created, 404 Not Found)
-- Optional resolution at HTTP boundary
-- Uses request DTOs with `@Valid` validation
-- Exposes CRUD endpoints (GET, POST, PUT, DELETE)
+### Services
 
-#### 2. **Service Layer** (`service/`)
-Business logic services for each domain entity. Services are the source of truth for all business operations.
-
-**Standard Service Methods**:
-- `getAll{Entity}()` — retrieves all records
-- `get{Entity}ById(Long id)` — returns `Optional<Entity>`
-- `create{Entity}(Entity entity)` — creates new record
-- `create{Entity}(Create{Entity}Request request)` — creates from DTO
-- `update{Entity}(Long id, Update{Entity}Request request)` — updates from DTO
-- `delete{Entity}(Long id)` — deletes by id
+Most business rules are in `src/main/java/com/mls/logistics/service`. Controllers should stay thin.
 
 **Service Classes**:
 - `WarehouseService`, `UnitService`, `ResourceService`, `StockService`
@@ -66,33 +44,21 @@ Business logic services for each domain entity. Services are the source of truth
 
 **Note**: `@Transactional` boundaries are implemented with read-only defaults.
 
-#### 3. **Repository Layer** (`repository/`)
-Spring Data JPA repositories handling only persistence operations.
-- Repository interfaces extend `JpaRepository`
-- No business logic allowed
+### Persistence
 
-#### 4. **Domain Layer** (`domain/`)
-JPA entities representing the core business model. All entities exist and are mapped:
+Repositories live in `src/main/java/com/mls/logistics/repository` (Spring Data JPA).
+
+### Domain
+
+Entities live in `src/main/java/com/mls/logistics/domain`:
 - `Unit`, `Warehouse`, `Resource`, `Stock`
 - `Order`, `OrderItem`, `Vehicle`, `Shipment`, `Movement`
 
-#### 5. **DTO Layer** (`dto/`)
-Request/response DTOs define API contracts:
-- Request DTOs for create/update operations (validation annotations included)
-- Response DTOs for API output mapping
+DTOs live in `src/main/java/com/mls/logistics/dto` (request/response).
 
-#### 6. **Exception Layer** (`exception/`)
-Global error handling and standardized error responses:
-- `GlobalExceptionHandler` with 400/404/500 handling
-- `ErrorResponse`, `ResourceNotFoundException`, `InvalidRequestException`
+Exceptions live in `src/main/java/com/mls/logistics/exception` (global handler + typed exceptions).
 
-#### 7. **Security Layer** (`security/`)
-Authentication and authorization components:
-- `SecurityConfig` — stateless security configuration (JWT + role rules)
-- `JwtAuthFilter` — extracts and validates bearer token per request
-- `JwtService` — token generation and validation
-- `AuthController` — public register/login endpoints (`/api/auth/**`)
-- `AppUser`, `Role`, `AppUserRepository`, `AppUserService`
+Security lives in `src/main/java/com/mls/logistics/security` (JWT for API + form login for UI).
 
 ### UI: Server-Side Admin Interface
 
@@ -122,7 +88,7 @@ The project includes a server-rendered admin UI built with Thymeleaf.
 
 #### Dashboard (Operational)
 
-The `/ui` dashboard is operational and data-driven (not decorative). It shows:
+The `/ui` dashboard is a quick operational snapshot. It shows:
 
 - KPI cards with context (pending orders badge, fulfillment target flag, etc.)
 - Charts (Chart.js v4) with safe fallbacks when the database has little/no historical data
@@ -131,7 +97,7 @@ The `/ui` dashboard is operational and data-driven (not decorative). It shows:
    - Low stock items with direct link to the stock adjust screen
    - Stale pending orders with direct link to the order detail page
 
-**Note about statuses**: the current domain model uses string statuses. “Pending” on the dashboard maps to `CREATED + VALIDATED`.
+**Note about statuses**: statuses are stored as strings. On the dashboard, “pending” maps to `CREATED + VALIDATED`.
 
 Dashboard thresholds are configurable via `mols.dashboard.*` in `application.properties`:
 
@@ -146,7 +112,7 @@ Dashboard thresholds are configurable via `mols.dashboard.*` in `application.pro
 
 Implementation notes:
 
-- Aggregations live in services (no repository access in `UiController`).
+- Aggregations live in services (the UI controller doesn’t talk to repositories).
 - Recent movements query uses an `@EntityGraph` to avoid N+1 during view rendering.
 
 **Security note**: `/api/**` remains JWT-protected. The UI uses form login + session auth; most `/ui/**` routes require login, with `/ui/login` and `/ui/setup` public.
@@ -222,8 +188,8 @@ WHERE username = 'admin';
 ## Where to Start (For a New Developer)
 
 1. **Read Documentation**:
-   - This file and `README.md` for project conventions
-   - Review the `PROJECT_CONTEXT.md` for detailed architecture rules
+   - This file and `README.md`
+   - `HELP.md` for local run / troubleshooting
 
 2. **Understand the Domain Model**:
    - Inspect entities in `src/main/java/com/mls/logistics/domain`
@@ -314,46 +280,13 @@ These fields are used by the UI detail pages to show end-to-end traceability.
 
 ## Developer Guidelines
 
-### Architecture Rules (STRICTLY ENFORCED)
+This repo follows a simple convention:
 
-**Controllers**:
-- ❌ NO business logic
-- ❌ NO validation
-- ❌ NO repository access
-- ✅ ONLY HTTP request/response handling
-- ✅ MUST use `ResponseEntity`
-- ✅ MUST resolve `Optional` at HTTP boundary
+- Controllers: HTTP only, call services
+- Services: business rules + transactions
+- Repos: persistence only
 
-**Services**:
-- ✅ ALL business logic here
-- ✅ Constructor-based dependency injection
-- ✅ Method names must match existing pattern
-- ❌ NO direct HTTP concerns
-
-**Repositories**:
-- ✅ ONLY persistence operations
-- ✅ Spring Data JPA interfaces
-- ❌ NO business logic
-
-**Domain Entities**:
-- ✅ JPA annotations only
-- ✅ Relationships mapped with `@ManyToOne`, `@OneToMany`, etc.
-- ❌ NO business logic
-
-### Code Style
-
-- **Language**: All code and comments in English
-- **Injection**: Constructor-based only (no field injection)
-- **Naming**: Explicit naming preferred over abstractions
-- **Comments**: Explain WHY, not WHAT
-- **Philosophy**: Clarity over cleverness, determinism over convenience
-
-### Git Discipline
-
-- Small, meaningful commits
-- Descriptive commit messages
-- Each commit represents a coherent change
-- Follow conventional commits format when possible
+Code/comments are in English. Constructor injection is preferred throughout.
 
 ### Package Structure
 
@@ -398,32 +331,9 @@ src/main/resources/
 - CI database: PostgreSQL 17 service container (`logistics_db`, `logistics_user`)
 - CI optimization: Maven dependency caching (`~/.m2`)
 
-## Current Implementation Status
+## Implementation Notes
 
-### ✅ Completed
-- [x] Domain model (all 9 entities)
-- [x] Repository layer (all 9 repositories)
-- [x] Service layer (all 9 services)
-- [x] Controller layer (all 9 controllers)
-- [x] PostgreSQL database configuration
-- [x] Hibernate schema auto-generation
-- [x] CRUD REST API (GET, POST, PUT, DELETE)
-- [x] DTOs for request/response contracts
-- [x] Global exception handling (`@RestControllerAdvice`)
-- [x] Input validation (`@Valid`, Bean Validation)
-- [x] Transactional boundaries (`@Transactional`)
-- [x] OpenAPI configuration (`OpenApiConfig`) and Swagger UI
-- [x] Endpoint documentation annotations (`@Tag`, `@Operation`, `@ApiResponses`)
-- [x] Security layer (JWT authentication + role-based authorization)
-- [x] Automated test suite (controller + service)
-- [x] Dockerization (multi-stage image build + compose stack)
-- [x] GitHub Actions CI pipeline (build + test on push/PR to `main`)
-- [x] Thymeleaf admin UI (list pages + CRUD forms + stock adjust + audit log)
-
-### Planned (In Order)
-1. Deeper integration testing (e.g., Testcontainers)
-2. CD pipeline (deployment/release automation)
-3. Security hardening (refresh tokens, key rotation, secrets management)
+This is an MVP that already covers the main CRUD flows + UI. The next obvious upgrades would be integration tests (Testcontainers) and a clearer fulfillment model if shipments need partial deliveries.
 
 ## API Endpoints Reference
 
@@ -506,18 +416,15 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 - **ORM**: Hibernate (JPA)
 - **Build Tool**: Maven 3.x (wrapper included)
 - **Containerization**: Docker + Docker Compose
-- **IDE**: VS Code (NOT IntelliJ)
-- **OS**: Windows 11
-- **Version Control**: GitHub (via GitHub Desktop)
+The project is editor-agnostic; VS Code works fine.
 
 ## Contacts and Next Steps
 
 - **Maintainer**: See `pom.xml` for project details
-- **Documentation**: `README.md`, `PROJECT_CONTEXT.md`
-- **Recommended Actions**:
-  - Test all API endpoints with Postman/cURL
-   - Add integration tests for auth flows and role restrictions
-   - Add unit/integration tests (controller + service + repository)
-   - Review validation rules for all request DTOs
+
+**Next steps (practical)**:
+
+- Add integration tests around auth + role restrictions
+- Decide whether shipments should support partial fulfillment (would require shipment line items)
 
 **Last updated**: 2026-02-23

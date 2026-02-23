@@ -41,10 +41,12 @@ import java.util.Optional;
 public class ShipmentService {
 
     private static final String STATUS_DELIVERED = "DELIVERED";
+    private static final String ORDER_STATUS_COMPLETED = "COMPLETED";
 
     private final ShipmentRepository shipmentRepository;
     private final OrderItemService orderItemService;
     private final StockService stockService;
+    private final OrderService orderService;
 
     /**
      * Constructor-based dependency injection.
@@ -55,10 +57,12 @@ public class ShipmentService {
      */
     public ShipmentService(ShipmentRepository shipmentRepository,
                            OrderItemService orderItemService,
-                           StockService stockService) {
+                           StockService stockService,
+                           OrderService orderService) {
         this.shipmentRepository = shipmentRepository;
         this.orderItemService = orderItemService;
         this.stockService = stockService;
+        this.orderService = orderService;
     }
 
     /**
@@ -107,10 +111,13 @@ public class ShipmentService {
      */
     @Transactional
     public Shipment createShipment(Shipment shipment) {
+        Long orderId = shipment != null && shipment.getOrder() != null ? shipment.getOrder().getId() : null;
+        assertOrderNotCompleted(orderId);
+
         Shipment saved = shipmentRepository.save(shipment);
 
         if (isDelivered(saved.getStatus())) {
-            fulfillShipment(saved);
+            fulfillIfOrderIsComplete(saved);
         }
 
         return saved;
@@ -145,10 +152,12 @@ public class ShipmentService {
         shipment.setWarehouse(warehouse);
         shipment.setStatus(request.getStatus());
 
+        assertOrderNotCompleted(request.getOrderId());
+
         Shipment saved = shipmentRepository.save(shipment);
 
         if (isDelivered(saved.getStatus())) {
-            fulfillShipment(saved);
+            fulfillIfOrderIsComplete(saved);
         }
 
         return saved;
@@ -177,7 +186,16 @@ public class ShipmentService {
 
         String previousStatus = shipment.getStatus();
 
+        // If the shipment is linked to a completed order, no further changes should be allowed.
+        Long existingOrderId = shipment.getOrder() != null ? shipment.getOrder().getId() : null;
+        if (existingOrderId != null && isOrderCompleted(existingOrderId)) {
+            throw new InvalidRequestException(
+                "Cannot modify a shipment for a COMPLETED order. Shipment id: " + id + ", order id: " + existingOrderId
+            );
+        }
+
         if (request.getOrderId() != null) {
+            assertOrderNotCompleted(request.getOrderId());
             Order order = new Order();
             order.setId(request.getOrderId());
             shipment.setOrder(order);
@@ -205,7 +223,7 @@ public class ShipmentService {
         }
 
         if (!isDelivered(previousStatus) && isDelivered(nextStatus)) {
-            fulfillShipment(shipment);
+            fulfillIfOrderIsComplete(shipment);
         }
 
         return shipmentRepository.save(shipment);
@@ -241,7 +259,7 @@ public class ShipmentService {
      *
      * @param shipment persisted shipment
      */
-    private void fulfillShipment(Shipment shipment) {
+    private void fulfillIfOrderIsComplete(Shipment shipment) {
         if (shipment.getId() == null) {
             throw new InvalidRequestException("Shipment must be persisted before fulfillment.");
         }
@@ -257,6 +275,17 @@ public class ShipmentService {
         }
 
         Long orderId = shipment.getOrder().getId();
+
+        // Only complete (and fulfill) an order once all shipments are delivered.
+        if (!areAllShipmentsDeliveredForOrder(orderId)) {
+            return;
+        }
+
+        // Guard: if the order is already completed, do not fulfill again.
+        if (isOrderCompleted(orderId)) {
+            return;
+        }
+
         Long warehouseId = shipment.getWarehouse().getId();
         Long shipmentId = shipment.getId();
 
@@ -296,6 +325,37 @@ public class ShipmentService {
                     )
                 );
         }
+
+        // Shipment is delivered and fulfillment succeeded: mark the parent order as completed.
+        orderService.markOrderCompleted(orderId);
+    }
+
+    private boolean areAllShipmentsDeliveredForOrder(Long orderId) {
+        if (orderId == null) {
+            return false;
+        }
+        Sort sort = Sort.by(Sort.Direction.ASC, "id");
+        List<Shipment> shipments = shipmentRepository.findByOrderId(orderId, sort);
+        if (shipments == null || shipments.isEmpty()) {
+            return false;
+        }
+        return shipments.stream().allMatch(s -> isDelivered(s.getStatus()));
+    }
+
+    private void assertOrderNotCompleted(Long orderId) {
+        if (orderId == null) {
+            return;
+        }
+        if (isOrderCompleted(orderId)) {
+            throw new InvalidRequestException("Cannot create or update shipments for a COMPLETED order. Order id: " + orderId);
+        }
+    }
+
+    private boolean isOrderCompleted(Long orderId) {
+        return orderService
+                .getOrderById(orderId)
+                .map(o -> o.getStatus() != null && ORDER_STATUS_COMPLETED.equalsIgnoreCase(o.getStatus().trim()))
+                .orElse(false);
     }
 
     /**

@@ -10,6 +10,7 @@ import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateShipmentRequest;
 import com.mls.logistics.dto.request.UpdateShipmentRequest;
 import com.mls.logistics.exception.InsufficientStockException;
+import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.ShipmentRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,9 @@ class ShipmentServiceTest {
 
     @Mock
     private StockService stockService;
+
+    @Mock
+    private OrderService orderService;
 
     @InjectMocks
     private ShipmentService shipmentService;
@@ -135,6 +139,12 @@ class ShipmentServiceTest {
         // Given
         when(shipmentRepository.findById(1L)).thenReturn(Optional.of(testShipment));
         when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
+        when(shipmentRepository.findByOrderId(eq(1L), any())).thenReturn(List.of(testShipment));
+
+        Order order = new Order();
+        order.setId(1L);
+        order.setStatus("CREATED");
+        when(orderService.getOrderById(1L)).thenReturn(Optional.of(order));
 
         Resource r1 = new Resource();
         r1.setId(10L);
@@ -168,6 +178,7 @@ class ShipmentServiceTest {
         // Then
         verify(stockService, times(1)).adjustStock(eq(200L), argThat(a -> a != null && Integer.valueOf(-3).equals(a.getDelta())));
         verify(stockService, times(1)).adjustStock(eq(201L), argThat(a -> a != null && Integer.valueOf(-5).equals(a.getDelta())));
+        verify(orderService, times(1)).markOrderCompleted(1L);
         verify(shipmentRepository, times(1)).save(any(Shipment.class));
     }
 
@@ -187,13 +198,67 @@ class ShipmentServiceTest {
         // Then
         verify(stockService, never()).adjustStock(anyLong(), any());
         verify(orderItemService, never()).getOrderItemsByOrderId(anyLong(), any());
+        verify(orderService, never()).markOrderCompleted(anyLong());
         verify(shipmentRepository, times(1)).save(any(Shipment.class));
+    }
+
+    @Test
+    void updateShipment_WhenOrderNotFullyDelivered_ShouldNotFulfillOrCompleteOrder() {
+        // Given
+        Shipment otherShipment = new Shipment();
+        otherShipment.setId(2L);
+        otherShipment.setOrder(testShipment.getOrder());
+        otherShipment.setVehicle(testShipment.getVehicle());
+        otherShipment.setWarehouse(testShipment.getWarehouse());
+        otherShipment.setStatus("PLANNED");
+
+        when(shipmentRepository.findById(1L)).thenReturn(Optional.of(testShipment));
+        when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
+        when(shipmentRepository.findByOrderId(eq(1L), any())).thenReturn(List.of(testShipment, otherShipment));
+
+        Order order = new Order();
+        order.setId(1L);
+        order.setStatus("CREATED");
+        when(orderService.getOrderById(1L)).thenReturn(Optional.of(order));
+
+        UpdateShipmentRequest req = new UpdateShipmentRequest();
+        req.setStatus("DELIVERED");
+
+        // When
+        shipmentService.updateShipment(1L, req);
+
+        // Then
+        verify(stockService, never()).adjustStock(anyLong(), any());
+        verify(orderService, never()).markOrderCompleted(anyLong());
+    }
+
+    @Test
+    void createShipment_WhenOrderCompleted_ShouldReject() {
+        // Given
+        Order completed = new Order();
+        completed.setId(1L);
+        completed.setStatus("COMPLETED");
+        when(orderService.getOrderById(1L)).thenReturn(Optional.of(completed));
+
+        CreateShipmentRequest request = new CreateShipmentRequest(1L, 1L, 1L, "PLANNED");
+
+        // When & Then
+        assertThatThrownBy(() -> shipmentService.createShipment(request))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("COMPLETED order");
+        verify(shipmentRepository, never()).save(any(Shipment.class));
     }
 
     @Test
     void updateShipment_WhenDeliverAndNoStockRecord_ShouldThrowConflict() {
         // Given
         when(shipmentRepository.findById(1L)).thenReturn(Optional.of(testShipment));
+        when(shipmentRepository.findByOrderId(eq(1L), any())).thenReturn(List.of(testShipment));
+
+        Order order = new Order();
+        order.setId(1L);
+        order.setStatus("CREATED");
+        when(orderService.getOrderById(1L)).thenReturn(Optional.of(order));
 
         Resource r1 = new Resource();
         r1.setId(10L);

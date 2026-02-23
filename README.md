@@ -1,31 +1,31 @@
 # MOLS — Multimodal Operative Logistics System
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/6c3cae38-df16-4c85-a334-6a53cb1f27fa" width="300" alt="Gemini_Generated_Image">
+  <img src="https://github.com/user-attachments/assets/6c3cae38-df16-4c85-a334-6a53cb1f27fa" width="300" alt="MOLS logo">
 </p>
 
 ![CI](https://github.com/Mango420x/MOLS/actions/workflows/ci.yml/badge.svg)
 
-Portfolio project: a web-based logistics system to manage resources, stock, orders, shipments, and movements with end-to-end traceability.
+MOLS is a logistics app to manage warehouses, resources, stock, orders and shipments, with an audit log (movements) so you can trace what changed and why.
 
 ---
 
 ## Highlights
 
-- Stock + audit trail: every change records a Movement (`ENTRY` / `EXIT`)
-- Orders + items workflow (create, edit, inline item management)
-- Shipments lifecycle including fulfillment on delivery
-- Detail pages that link Orders/Shipments to related Movements (traceability)
-- Operational dashboard (`/ui`) with KPIs, charts (Chart.js), recent activity, and proactive alerts
-- First-run setup to create the initial admin user (no manual DB seeding)
-- Admin-only user management in the UI (roles, password reset, enable/disable)
+- Stock adjustments automatically create Movement audit records (`ENTRY` / `EXIT`)
+- Orders with items (create/edit, inline item management)
+- Shipments with fulfillment on delivery
+- Traceability views (Order/Shipment details show linked movements)
+- `/ui` dashboard with KPIs, charts (Chart.js), recent activity and alerts
+- First-run setup to create the initial admin user
+- Admin-only user management (roles, password reset, enable/disable)
 
 ---
 
 <details>
 <summary>Resumen en español (🇪🇸)</summary>
 
-MOLS es un proyecto de portfolio: un sistema web para gestionar stock, pedidos, envíos y auditoría de movimientos, con trazabilidad completa.
+MOLS es un sistema web para gestionar stock, pedidos y envíos, con auditoría de movimientos para trazabilidad.
 
 Para detalles técnicos y arquitectura, consulta [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md).
 </details>
@@ -55,7 +55,7 @@ With the application running:
 
 ## Dashboard (UI)
 
-The dashboard at `/ui` is designed to work with an empty database (friendly empty states) and improve naturally as historical data grows.
+The dashboard at `/ui` shows sensible empty states on a fresh database, and becomes more useful as you build history.
 
 Includes:
 
@@ -63,7 +63,7 @@ Includes:
 - Charts: stock distribution by warehouse (bar), movements by type (doughnut), orders by status (pie)
 - Alerts: low stock items (action link to adjust), stale pending orders (link to order detail)
 
-Configuration (no hardcoded thresholds): `src/main/resources/application.properties`
+Dashboard thresholds live in `src/main/resources/application.properties`:
 
 - `mols.dashboard.low-stock-threshold` (default: 10)
 - `mols.dashboard.critical-stock-threshold` (default: 5)
@@ -103,4 +103,8 @@ This project is for educational and portfolio purposes.
 
 ## Contributing
 
-Contributions are welcome. Focus on clearer workflows, better validation, and stronger testing.
+PRs are welcome.
+
+- Keep changes small and focused
+- Add/adjust tests when behavior changes
+- Prefer service-layer rules (controllers stay thin)

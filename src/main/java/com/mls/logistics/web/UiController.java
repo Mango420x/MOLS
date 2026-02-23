@@ -1844,7 +1844,7 @@ public class UiController {
         Sort vehicleSort = Sort.by(Sort.Direction.ASC, "id");
         Sort warehouseSort = Sort.by(Sort.Direction.ASC, "name").and(Sort.by(Sort.Direction.ASC, "id"));
 
-        model.addAttribute("orders", safeList(() -> orderService.getAllOrders(orderSort), model));
+        model.addAttribute("orders", safeList(() -> orderService.getOrdersExcludingStatus("COMPLETED", orderSort), model));
         model.addAttribute("vehicles", safeList(() -> vehicleService.getAllVehicles(vehicleSort), model));
         model.addAttribute("warehouses", safeList(() -> warehouseService.getAllWarehouses(warehouseSort), model));
         model.addAttribute("shipmentStatuses", List.of("PLANNED", "IN_TRANSIT", "DELIVERED"));
